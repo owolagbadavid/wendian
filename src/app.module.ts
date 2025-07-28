@@ -9,6 +9,7 @@ import { CacheModule, CacheModuleAsyncOptions } from '@nestjs/cache-manager';
 import KeyvRedis from '@keyv/redis';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
+import { HttpModule } from '@nestjs/axios';
 
 const cacheConfig: CacheModuleAsyncOptions = {
   isGlobal: true,
@@ -36,7 +37,7 @@ const cacheConfig: CacheModuleAsyncOptions = {
     UsersModule,
     KnexModule,
     CacheModule.registerAsync(cacheConfig),
-
+    HttpModule,
     BullModule.forRootAsync({
       useFactory: (configService: ConfigService) => {
         return {

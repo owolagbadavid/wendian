@@ -4,9 +4,9 @@ import {
   IsString,
   MinLength,
   IsNotEmpty,
-  IsEnum,
+  // IsEnum,
 } from 'class-validator';
-import { RoleEnum } from 'src/common/enums';
+// import { RoleEnum } from 'src/common/enums';
 import { HelperService } from 'src/common/services/helper.service';
 
 export class LoginDto {
@@ -82,11 +82,11 @@ export class RegisterDto {
   // @IsNotEmpty()
   // confirmPassword: string;
 
-  @ApiProperty()
-  @ApiProperty({ enum: [RoleEnum.ADMIN, RoleEnum.CUSTOMER] })
-  @IsNotEmpty()
-  @IsEnum([RoleEnum.ADMIN, RoleEnum.CUSTOMER])
-  role: RoleEnum.ADMIN | RoleEnum.CUSTOMER;
+  // @ApiProperty()
+  // @ApiProperty({ enum: [RoleEnum.ADMIN, RoleEnum.CUSTOMER] })
+  // @IsNotEmpty()
+  // @IsEnum([RoleEnum.ADMIN, RoleEnum.CUSTOMER])
+  // role: RoleEnum.ADMIN | RoleEnum.CUSTOMER;
 }
 
 export class VerifyEmailDto extends PickType(ResetPasswordDto, [

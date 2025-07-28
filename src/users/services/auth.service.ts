@@ -17,7 +17,7 @@ import { CACHE_KEYS } from 'src/common/constants';
 import { CACHE_MANAGER, Cache } from '@nestjs/cache-manager';
 import { HelperService } from 'src/common/services/helper.service';
 import { NotificationEnum } from 'src/mail/notification.enum';
-import { StatusEnum } from 'src/common/enums';
+import { RoleEnum, StatusEnum } from 'src/common/enums';
 
 import { ConfigService } from '@nestjs/config';
 
@@ -194,7 +194,7 @@ export class AuthService {
     return;
   }
 
-  async registerUser({ email, firstName, lastName, role }: RegisterDto) {
+  async registerUser({ email, firstName, lastName }: RegisterDto) {
     try {
       const existingUser = await this.userRepository.findByEmail(email);
       if (existingUser) {
@@ -205,7 +205,7 @@ export class AuthService {
         email,
         password_hash: PasswordHasher.hashPassword('defaultPassword'),
         status: StatusEnum.PENDING,
-        role,
+        role: RoleEnum.CUSTOMER,
         is_email_verified: true,
         email_verified_at: null,
       });
