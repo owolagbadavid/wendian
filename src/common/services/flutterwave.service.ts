@@ -1,10 +1,11 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { HttpService } from '@nestjs/axios';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AxiosError } from 'axios';
 import Flutterwave from 'flutterwave-node-v3';
+
 import { catchError, firstValueFrom } from 'rxjs';
+import { DEFAULT_CURRENCY } from '../constants';
 
 @Injectable()
 export class FlutterwaveService {
@@ -48,7 +49,7 @@ export class FlutterwaveService {
       const payload = { country };
       const response = await this.flw.Bank.country(payload);
       this.logger.log('Banks fetched successfully');
-      return response;
+      return response.data;
     } catch (error) {
       this.logger.error('Error fetching banks', error);
       throw error;
@@ -105,23 +106,28 @@ export class FlutterwaveService {
 
   async initiatePayment(
     payload: {
-      id: string;
       amount: number;
       email: string;
       fullName: string;
       callbackUrl: string;
     },
     ref: string,
-  ): Promise<any> {
+  ): Promise<{
+    link: string;
+  }> {
     try {
       const { data: response } = await firstValueFrom(
         this.httpService
-          .post(
+          .post<{
+            status: string;
+            message: string;
+            data: { link: string };
+          }>(
             'https://api.flutterwave.com/v3/payments',
             {
               amount: payload.amount,
               tx_ref: ref,
-              currency: 'NGN',
+              currency: DEFAULT_CURRENCY,
               redirect_url: payload.callbackUrl,
               configuration: {
                 session_duration: 20,
@@ -146,7 +152,7 @@ export class FlutterwaveService {
           ),
       );
       this.logger.log('Payment initiated successfully');
-      return response;
+      return response.data;
     } catch (error) {
       this.logger.error('Error initiating payment', error);
       throw error;

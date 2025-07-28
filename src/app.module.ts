@@ -11,6 +11,7 @@ import { APP_INTERCEPTOR } from '@nestjs/core';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 import { HttpModule } from '@nestjs/axios';
 import { WalletModule } from './wallet/wallet.module';
+import { FlutterwaveService } from './common/services/flutterwave.service';
 
 const cacheConfig: CacheModuleAsyncOptions = {
   isGlobal: true,
@@ -38,7 +39,9 @@ const cacheConfig: CacheModuleAsyncOptions = {
     UsersModule,
     KnexModule,
     CacheModule.registerAsync(cacheConfig),
-    HttpModule,
+    HttpModule.register({
+      global: true,
+    }),
     BullModule.forRootAsync({
       useFactory: (configService: ConfigService) => {
         return {
@@ -64,6 +67,7 @@ const cacheConfig: CacheModuleAsyncOptions = {
   ],
   controllers: [AppController],
   providers: [
+    FlutterwaveService,
     AppService,
     {
       provide: APP_INTERCEPTOR,

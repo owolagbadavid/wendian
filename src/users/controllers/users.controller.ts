@@ -22,4 +22,16 @@ export class UsersController {
   getMe(@UserContext('sub') userId: string) {
     return this.usersService.getMe(parseInt(userId, 10));
   }
+
+  @ResponseMessage('Wallet created successfully')
+  @Post('wallets')
+  createWallet(@UserContext('sub') userId: string) {
+    return this.usersService.createWallet(parseInt(userId, 10));
+  }
+
+  @ResponseMessage('Wallet details fetched successfully')
+  @Get('wallets')
+  getUserWallet(@UserContext('sub') userId: string) {
+    return this.usersService.getUserWallet(parseInt(userId, 10));
+  }
 }

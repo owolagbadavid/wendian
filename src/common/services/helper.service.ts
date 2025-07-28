@@ -2,6 +2,7 @@
 import { randomInt } from 'node:crypto';
 import { Transform } from 'class-transformer';
 import { camelCase } from 'lodash';
+import { HttpException } from '@nestjs/common';
 
 export class HelperService {
   // static isQueryFailedError = (
@@ -89,5 +90,32 @@ export class HelperService {
     rows: Record<string, any>[],
   ): T[] {
     return rows.map((row) => this.mapToClassCamelCase(cls, row));
+  }
+
+  static errorHandler(
+    err: unknown,
+    message: string = 'An error occurred',
+  ): never {
+    if (err instanceof HttpException) {
+      throw err;
+    }
+
+    throw new HttpException(message, 500);
+  }
+
+  static generateReference(options?: {
+    prefix?: string;
+    suffix?: string;
+  }): string {
+    const randomId = crypto
+      .randomUUID()
+      .replace(/-/g, '')
+      .slice(0, 16)
+      .toUpperCase();
+
+    const prefix = options?.prefix ? `${options.prefix}-` : '';
+    const suffix = options?.suffix ? `-${options.suffix}` : '';
+
+    return `${prefix}${randomId}${suffix}`;
   }
 }
