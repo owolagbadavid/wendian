@@ -19,7 +19,9 @@ export class BaseRepository<T extends TableEntity> {
     protected readonly tableName: keyof Tables,
   ) {}
 
-  async findPaged(searchRequest: SearchRequestDto): Promise<PagedResult<T>> {
+  async findPaged(
+    searchRequest: SearchRequestDto,
+  ): Promise<PagedResult<Knex.ResolveTableType<T, 'base'>>> {
     const { filters = [], sorts = [], page = 1, size = 10 } = searchRequest;
 
     const query = this.knex(this.tableName)
@@ -48,7 +50,7 @@ export class BaseRepository<T extends TableEntity> {
     const total = Number(totalResult?.count ?? 0);
 
     return {
-      items: items as unknown as T[],
+      items: items as Knex.ResolveTableType<T, 'base'>[],
       total,
       page,
       size,
@@ -64,28 +66,29 @@ export class BaseRepository<T extends TableEntity> {
     return rows as unknown as T[];
   }
 
-  async findOne(filter: Partial<T>): Promise<T | null> {
+  async findOne(
+    filter: Partial<Knex.ResolveTableType<T, 'base'>>,
+  ): Promise<Knex.ResolveTableType<T, 'base'> | null> {
     const row = await this.knex(this.tableName)
       .where(filter)
       .whereNull('deleted_at')
       .first();
 
-    return (row ?? null) as unknown as T | null;
+    return (row ?? null) as Knex.ResolveTableType<T, 'base'> | null;
   }
 
-  async findById(id: number): Promise<T | null> {
+  async findById(id: number): Promise<Knex.ResolveTableType<T, 'base'> | null> {
     const row = await this.knex(this.tableName)
       .where({ id })
       .whereNull('deleted_at')
       .first();
 
-    return (row ?? null) as unknown as T | null;
+    return (row ?? null) as Knex.ResolveTableType<T, 'base'> | null;
   }
 
-  async insert(data: Knex.ResolveTableType<T, 'insert'>): Promise<T> {
+  async insert(data: Knex.ResolveTableType<T, 'insert'>): Promise<number> {
     const [created] = await this.knex(this.tableName).insert(data);
-
-    return created as unknown as T;
+    return created;
   }
 
   async update(
