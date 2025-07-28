@@ -10,6 +10,7 @@ import KeyvRedis from '@keyv/redis';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 import { HttpModule } from '@nestjs/axios';
+import { WalletModule } from './wallet/wallet.module';
 
 const cacheConfig: CacheModuleAsyncOptions = {
   isGlobal: true,
@@ -59,6 +60,7 @@ const cacheConfig: CacheModuleAsyncOptions = {
       isGlobal: true,
       cache: true,
     }),
+    WalletModule,
   ],
   controllers: [AppController],
   providers: [

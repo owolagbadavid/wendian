@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { SearchRequestDto } from 'src/common/dtos';
 import { UserRepository } from 'src/db/repositories/user.repository';
 
@@ -12,5 +12,14 @@ export class UsersService {
     } catch (error) {
       console.error(error);
     }
+  }
+
+  async getMe(userId: number) {
+    console.log('Fetching user with ID:', userId);
+    const user = await this.userRepository.findOne({ id: userId });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    return user;
   }
 }

@@ -206,7 +206,7 @@ export class AuthService {
         password_hash: PasswordHasher.hashPassword('defaultPassword'),
         status: StatusEnum.PENDING,
         role: RoleEnum.CUSTOMER,
-        is_email_verified: true,
+        is_email_verified: false,
         email_verified_at: null,
       });
 

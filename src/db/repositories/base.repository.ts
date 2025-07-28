@@ -58,8 +58,8 @@ export class BaseRepository<T extends TableEntity> {
     };
   }
 
-  async findAll(): Promise<T[]> {
-    const rows = await this.knex(this.tableName)
+  async findAll(trx?: Knex.Transaction): Promise<T[]> {
+    const rows = await (trx || this.knex)(this.tableName)
       .whereNull('deleted_at')
       .select('*');
 
@@ -68,8 +68,9 @@ export class BaseRepository<T extends TableEntity> {
 
   async findOne(
     filter: Partial<Knex.ResolveTableType<T, 'base'>>,
+    trx?: Knex.Transaction,
   ): Promise<Knex.ResolveTableType<T, 'base'> | null> {
-    const row = await this.knex(this.tableName)
+    const row = await (trx || this.knex)(this.tableName)
       .where(filter)
       .whereNull('deleted_at')
       .first();
@@ -77,8 +78,11 @@ export class BaseRepository<T extends TableEntity> {
     return (row ?? null) as Knex.ResolveTableType<T, 'base'> | null;
   }
 
-  async findById(id: number): Promise<Knex.ResolveTableType<T, 'base'> | null> {
-    const row = await this.knex(this.tableName)
+  async findById(
+    id: number,
+    trx?: Knex.Transaction,
+  ): Promise<Knex.ResolveTableType<T, 'base'> | null> {
+    const row = await (trx || this.knex)(this.tableName)
       .where({ id })
       .whereNull('deleted_at')
       .first();
@@ -86,28 +90,37 @@ export class BaseRepository<T extends TableEntity> {
     return (row ?? null) as Knex.ResolveTableType<T, 'base'> | null;
   }
 
-  async insert(data: Knex.ResolveTableType<T, 'insert'>): Promise<number> {
-    const [created] = await this.knex(this.tableName).insert(data);
+  async insert(
+    data: Knex.ResolveTableType<T, 'insert'>,
+    trx?: Knex.Transaction,
+  ): Promise<number> {
+    const [created] = await (trx || this.knex)(this.tableName).insert(data);
     return created;
   }
 
   async update(
     id: number,
     data: Knex.ResolveTableType<T, 'update'>,
+    trx?: Knex.Transaction,
   ): Promise<number> {
-    const updated = await this.knex(this.tableName)
+    const updated = await (trx || this.knex)(this.tableName)
       .where({ id })
       .whereNull('deleted_at')
-      .update({ ...data, updated_at: this.knex.fn.now() as unknown as Date });
+      .update({
+        ...data,
+        updated_at: (trx || this.knex).fn.now() as unknown as Date,
+      });
 
     return updated;
   }
 
-  async softDelete(id: number): Promise<boolean> {
-    const affected = await this.knex(this.tableName)
+  async softDelete(id: number, trx?: Knex.Transaction): Promise<boolean> {
+    const affected = await (trx || this.knex)(this.tableName)
       .where({ id })
       .whereNull('deleted_at')
-      .update({ deleted_at: this.knex.fn.now() as unknown as Date });
+      .update({
+        deleted_at: (trx || this.knex).fn.now() as unknown as Date,
+      });
 
     return affected > 0;
   }

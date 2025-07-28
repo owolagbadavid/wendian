@@ -15,6 +15,7 @@ import { ResponseMessage } from 'src/common/decorators';
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
+  @ResponseMessage('Login successful')
   @Post('login')
   @HttpCode(HttpStatus.OK)
   async login(@Body() loginDto: LoginDto) {
