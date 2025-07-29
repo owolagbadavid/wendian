@@ -118,4 +118,15 @@ export class HelperService {
 
     return `${prefix}${randomId}${suffix}`;
   }
+
+  static parseDecimals<T>(row: T, decimalFields: (keyof T)[]): T {
+    for (const field of decimalFields) {
+      if (typeof row[field] === 'string') {
+        row[field] = parseFloat(
+          row[field] as unknown as string,
+        ) as T[typeof field];
+      }
+    }
+    return row;
+  }
 }

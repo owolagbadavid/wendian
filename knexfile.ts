@@ -1,5 +1,11 @@
 import type { Knex } from 'knex';
 import 'dotenv/config';
+import Decimal from 'decimal.js';
+
+interface Field {
+  type: string;
+  string: () => string | null;
+}
 
 const config: { [key: string]: Knex.Config } = {
   development: {
@@ -15,6 +21,13 @@ const config: { [key: string]: Knex.Config } = {
           ? { rejectUnauthorized: false }
           : undefined,
       port: parseInt(process.env.DB_PORT || '3306', 10) || 3306,
+      typeCast: function (field: Field, next: () => any): any {
+        if (field.type === 'DECIMAL' || field.type === 'NEWDECIMAL') {
+          const value: string | null = field.string();
+          return value === null ? null : new Decimal(value);
+        }
+        return next();
+      },
     },
     migrations: {
       directory: './migrations',

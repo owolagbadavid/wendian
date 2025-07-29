@@ -3,6 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import Decimal from 'decimal.js';
 import { Knex } from 'knex';
 import { Wallet } from 'knex/types/tables';
 import { DEFAULT_CURRENCY } from 'src/common/constants';
@@ -76,7 +77,7 @@ export class WalletService {
       await this.transactionRepo.insert({
         internal_reference: reference,
         wallet_id: wallet.id,
-        amount,
+        amount: amount,
         transaction_type: 'DEPOSIT',
         status: 'PENDING',
         currency: wallet.currency,
@@ -85,6 +86,7 @@ export class WalletService {
 
       return response;
     } catch (error) {
+      console.error('Error initiating payment:', error);
       HelperService.errorHandler(error, 'Failed to initiate payment');
     }
   }
@@ -93,6 +95,8 @@ export class WalletService {
     const transaction = await this.transactionRepo.findOne({
       internal_reference: reference,
     });
+
+    console.log('Transaction:', transaction);
 
     if (!transaction) {
       throw new NotFoundException('Transaction not found');
@@ -120,7 +124,7 @@ export class WalletService {
 
       if (
         response.status !== 'successful' ||
-        response.amount !== Number(transaction.amount) ||
+        !transaction.amount.equals(response.amount) ||
         response.currency !== transaction.currency
       ) {
         throw new BadRequestException('Could not verify payment');
@@ -144,15 +148,19 @@ export class WalletService {
     }
   }
 
-  async depositToWallet(wallet: Wallet, amount: number, trx: Knex.Transaction) {
-    if (amount <= 0) {
+  async depositToWallet(
+    wallet: Wallet,
+    amount: Decimal,
+    trx: Knex.Transaction,
+  ) {
+    if (amount.lessThan(0)) {
       throw new BadRequestException('Amount must be greater than zero');
     }
 
     await this.walletRepository.update(
       wallet.id,
       {
-        balance: Number(wallet.balance) + Number(amount),
+        balance: wallet.balance.add(amount).toNumber(),
       },
       trx,
     );
@@ -160,21 +168,21 @@ export class WalletService {
 
   async withdrawFromWallet(
     wallet: Wallet,
-    amount: number,
+    amount: Decimal,
     trx: Knex.Transaction,
   ) {
-    if (amount <= 0) {
+    if (amount.lessThan(0)) {
       throw new BadRequestException('Amount must be greater than zero');
     }
 
-    if (Number(wallet.balance) < Number(amount)) {
+    if (wallet.balance.lessThan(amount)) {
       throw new BadRequestException('Insufficient balance');
     }
 
     await this.walletRepository.update(
       wallet.id,
       {
-        balance: Number(wallet.balance) - Number(amount),
+        balance: wallet.balance.sub(amount).toNumber(),
       },
       trx,
     );

@@ -1,6 +1,7 @@
 import { Knex } from 'knex';
 import type { BaseEntity } from '../entities';
 import { RoleEnum, StatusEnum } from 'src/common/enums';
+import Decimal from 'decimal.js';
 
 // Define transaction types and statuses as string literals to mimic ENUMs
 type TransactionType =
@@ -23,7 +24,7 @@ declare module 'knex/types/tables' {
 
   interface Wallet extends BaseEntity {
     user_id: number;
-    balance: number;
+    balance: Decimal;
     currency: string;
     is_active: boolean;
   }
@@ -31,7 +32,7 @@ declare module 'knex/types/tables' {
   interface Transaction extends BaseEntity {
     wallet_id: number;
     transaction_type: TransactionType;
-    amount: number;
+    amount: Decimal;
     currency: string;
     status: TransactionStatus;
     external_reference: string | null;
@@ -41,11 +42,11 @@ declare module 'knex/types/tables' {
   interface Transfer extends BaseEntity {
     from_wallet_id: number;
     to_wallet_id: number;
-    amount: number;
+    amount: Decimal;
     currency: string;
     status: TransactionStatus;
     description: string | null;
-    fee: number;
+    fee: Decimal;
     from_transaction_id: number | null;
     to_transaction_id: number | null;
   }
@@ -67,9 +68,11 @@ declare module 'knex/types/tables' {
     >;
     wallets: Knex.CompositeTableType<
       Wallet,
-      Pick<Wallet, 'user_id' | 'balance' | 'currency' | 'is_active'> &
-        Partial<Pick<Wallet, 'created_at' | 'updated_at' | 'deleted_at'>>,
-      Partial<Omit<Wallet, 'id'>>
+      Pick<Wallet, 'user_id' | 'currency' | 'is_active'> &
+        Partial<Pick<Wallet, 'created_at' | 'updated_at' | 'deleted_at'>> & {
+          balance: number;
+        },
+      Partial<Omit<Wallet, 'id' | 'balance'>> & Partial<{ balance: number }>
     >;
     transactions: Knex.CompositeTableType<
       Transaction,
@@ -77,14 +80,18 @@ declare module 'knex/types/tables' {
         Transaction,
         | 'wallet_id'
         | 'transaction_type'
-        | 'amount'
         | 'currency'
         | 'status'
         | 'external_reference'
         | 'internal_reference'
       > &
-        Partial<Pick<Transaction, 'created_at' | 'updated_at' | 'deleted_at'>>,
-      Partial<Omit<Transaction, 'id'>>
+        Partial<
+          Pick<Transaction, 'created_at' | 'updated_at' | 'deleted_at'>
+        > & { amount: number },
+      Partial<Omit<Transaction, 'id' | 'amount'>> &
+        Partial<{
+          amount: number;
+        }>
     >;
     transfers: Knex.CompositeTableType<
       Transfer,
@@ -92,16 +99,21 @@ declare module 'knex/types/tables' {
         Transfer,
         | 'from_wallet_id'
         | 'to_wallet_id'
-        | 'amount'
         | 'currency'
         | 'status'
         | 'description'
-        | 'fee'
         | 'from_transaction_id'
         | 'to_transaction_id'
       > &
-        Partial<Pick<Transfer, 'created_at' | 'updated_at' | 'deleted_at'>>,
-      Partial<Omit<Transfer, 'id'>>
+        Partial<Pick<Transfer, 'created_at' | 'updated_at' | 'deleted_at'>> & {
+          amount: number;
+          fee: number;
+        },
+      Partial<Omit<Transfer, 'id' | 'amount' | 'fee'>> &
+        Partial<{
+          amount: number;
+          fee: number;
+        }>
     >;
   }
 }
