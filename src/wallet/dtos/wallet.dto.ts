@@ -8,6 +8,13 @@ export class FundWalletDto {
   amount: number;
 }
 
+export class VerifyPaymentDto {
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  reference: string;
+}
+
 export class WalletWithdrawalDto {
   @ApiProperty()
   @IsNumber()

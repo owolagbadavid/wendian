@@ -95,7 +95,7 @@ declare module 'flutterwave-node-v3' {
       payment_type: string;
       created_at: string;
       account_id: number;
-      card: {
+      card?: {
         first_6digits: string;
         last_4digits: string;
         issuer: string;

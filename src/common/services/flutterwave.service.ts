@@ -68,24 +68,72 @@ export class FlutterwaveService {
     }
   }
 
-  async verifyTransaction(transactionId: string): Promise<any> {
+  async verifyTransaction(ref: string): Promise<{
+    internalRef: string;
+    externalRef: string;
+    amount: number;
+    status: string;
+    currency: string;
+  }> {
     try {
-      const payload = { id: transactionId };
+      const payload = { id: ref };
       const response = await this.flw.Transaction.verify(payload);
-      this.logger.log('Transaction verified successfully');
-      return response;
+      if (response.status !== 'success') {
+        throw new Error(response?.message || 'Transaction verification failed');
+      }
+
+      const data = response.data;
+      if (!data) {
+        throw new Error(
+          response?.message || 'No data found for the transaction',
+        );
+      }
+
+      const res = {
+        internalRef: data.tx_ref,
+        externalRef: data.id.toString(),
+        amount: data.amount,
+        status: data.status,
+        currency: data.currency,
+      };
+
+      return res;
     } catch (error) {
       this.logger.error('Error verifying transaction', error);
       throw error;
     }
   }
 
-  async verifyTransactionBySystemRef(systemRef: string): Promise<any> {
+  async verifyTransactionBySystemRef(systemRef: string): Promise<{
+    internalRef: string;
+    externalRef: string;
+    amount: number;
+    status: string;
+    currency: string;
+  }> {
     try {
       const payload = { tx_ref: systemRef };
       const response = await this.flw.Transaction.verify_by_tx(payload);
-      this.logger.log('Transaction verified by tx_ref successfully');
-      return response;
+      if (response.status !== 'success') {
+        throw new Error(response?.message || 'Transaction verification failed');
+      }
+
+      const data = response.data;
+      if (!data) {
+        throw new Error(
+          response?.message || 'No data found for the transaction',
+        );
+      }
+
+      const res = {
+        internalRef: data.tx_ref,
+        externalRef: data.id.toString(),
+        amount: data.amount,
+        status: data.status,
+        currency: data.currency,
+      };
+
+      return res;
     } catch (error) {
       this.logger.error('Error verifying transaction by tx_ref', error);
       throw error;
@@ -109,6 +157,7 @@ export class FlutterwaveService {
       amount: number;
       email: string;
       fullName: string;
+      currency?: string;
       callbackUrl: string;
     },
     ref: string,
@@ -116,6 +165,8 @@ export class FlutterwaveService {
     link: string;
   }> {
     try {
+      const currency = payload.currency || DEFAULT_CURRENCY;
+
       const { data: response } = await firstValueFrom(
         this.httpService
           .post<{
@@ -127,7 +178,7 @@ export class FlutterwaveService {
             {
               amount: payload.amount,
               tx_ref: ref,
-              currency: DEFAULT_CURRENCY,
+              currency: currency,
               redirect_url: payload.callbackUrl,
               configuration: {
                 session_duration: 20,
@@ -151,6 +202,11 @@ export class FlutterwaveService {
             }),
           ),
       );
+
+      if (response.status !== 'success') {
+        throw new Error(response.message || 'Payment initiation failed');
+      }
+
       this.logger.log('Payment initiated successfully');
       return response.data;
     } catch (error) {

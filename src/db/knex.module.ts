@@ -1,7 +1,12 @@
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
 import { Global, Module } from '@nestjs/common';
 import knex, { Knex } from 'knex';
 import knexConfig from '../../knexfile';
 import { UnitOfWork } from './uow/uow';
+import { WalletRepository } from './repositories/wallet.repository';
+import { TransactionRepository } from './repositories/transaction.repository';
+import { UserRepository } from './repositories/user.repository';
+import { TransferRepository } from './repositories/transfer.repository';
 
 export const PROVIDER_NAME = 'KNEX_CONNECTION';
 
@@ -23,14 +28,34 @@ export const knexProvider = {
       useFactory: (knex: Knex) => new UnitOfWork(knex),
       inject: [knexProvider.provide],
     },
-  ],
-  exports: [
-    PROVIDER_NAME,
     {
-      provide: UnitOfWork,
-      useFactory: (knex: Knex) => new UnitOfWork(knex),
+      provide: WalletRepository,
+      useFactory: (knex: Knex) => new WalletRepository(knex),
       inject: [knexProvider.provide],
     },
+    {
+      provide: TransactionRepository,
+      useFactory: (knex: Knex) => new TransactionRepository(knex),
+      inject: [knexProvider.provide],
+    },
+    {
+      provide: UserRepository,
+      useFactory: (knex: Knex) => new UserRepository(knex),
+      inject: [knexProvider.provide],
+    },
+    {
+      provide: TransferRepository,
+      useFactory: (knex: Knex) => new TransferRepository(knex),
+      inject: [knexProvider.provide],
+    },
+  ],
+  exports: [
+    knexProvider.provide,
+    UnitOfWork,
+    WalletRepository,
+    TransactionRepository,
+    UserRepository,
+    TransferRepository,
   ],
 })
 export class KnexModule {}
