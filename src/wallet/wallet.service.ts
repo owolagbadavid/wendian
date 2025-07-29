@@ -11,6 +11,7 @@ import { TransactionPrefixEnum } from 'src/common/enums';
 import { FlutterwaveService } from 'src/common/services/flutterwave.service';
 import { HelperService } from 'src/common/services/helper.service';
 import { TransactionRepository } from 'src/db/repositories/transaction.repository';
+import { TransferRepository } from 'src/db/repositories/transfer.repository';
 import { UserRepository } from 'src/db/repositories/user.repository';
 import { WalletRepository } from 'src/db/repositories/wallet.repository';
 import { UnitOfWork } from 'src/db/uow/uow';
@@ -20,6 +21,7 @@ export class WalletService {
   constructor(
     private readonly walletRepository: WalletRepository,
     private readonly transactionRepo: TransactionRepository,
+    private readonly transferRepo: TransferRepository,
     private readonly paymentService: FlutterwaveService,
     private readonly userRepo: UserRepository,
     private readonly uow: UnitOfWork,
@@ -96,8 +98,6 @@ export class WalletService {
       internal_reference: reference,
     });
 
-    console.log('Transaction:', transaction);
-
     if (!transaction) {
       throw new NotFoundException('Transaction not found');
     }
@@ -145,6 +145,101 @@ export class WalletService {
       return successResponse;
     } catch (error) {
       HelperService.errorHandler(error);
+    }
+  }
+
+  async handleWalletTransfer(
+    fromUserId: number,
+    toUsername: string,
+    amount: number,
+    description?: string,
+  ) {
+    const fromWallet = await this.findByUserId(fromUserId);
+    const toWallet = await this.userRepo
+      .findOne({
+        username: toUsername,
+      })
+      .then((user) => {
+        if (!user) {
+          throw new NotFoundException('Recipient user not found');
+        }
+        return this.findByUserId(user.id);
+      });
+
+    if (!toWallet || !fromWallet) {
+      throw new NotFoundException('Wallet not found for one of the users');
+    }
+
+    await this.walletTransfer(fromWallet.id, toWallet.id, amount, description);
+  }
+
+  async walletTransfer(
+    fromWalletId: number,
+    toWalletId: number,
+    amount: number,
+    description?: string,
+  ) {
+    const fromWallet = await this.findById(fromWalletId);
+    const toWallet = await this.findById(toWalletId);
+
+    if (fromWallet.currency !== toWallet.currency) {
+      throw new BadRequestException('Wallets must have the same currency');
+    }
+
+    if (fromWallet.balance.lessThan(amount)) {
+      throw new BadRequestException('Insufficient balance');
+    }
+
+    try {
+      await this.uow.executeInTransaction(async (trx: Knex.Transaction) => {
+        const transferOutTransaction = await this.transactionRepo.insert(
+          {
+            wallet_id: fromWallet.id,
+            amount: amount,
+            transaction_type: 'TRANSFER_OUT',
+            status: 'COMPLETED',
+            currency: fromWallet.currency,
+            internal_reference: HelperService.generateReference({
+              prefix: TransactionPrefixEnum.TRANSFER,
+            }),
+            external_reference: null,
+          },
+          trx,
+        );
+
+        const transferInTransaction = await this.transactionRepo.insert(
+          {
+            wallet_id: toWallet.id,
+            amount: amount,
+            transaction_type: 'TRANSFER_IN',
+            status: 'COMPLETED',
+            currency: toWallet.currency,
+            internal_reference: HelperService.generateReference({
+              prefix: TransactionPrefixEnum.TRANSFER,
+            }),
+            external_reference: null,
+          },
+          trx,
+        );
+
+        const transfer = await this.transferRepo.insert(
+          {
+            from_wallet_id: fromWallet.id,
+            to_wallet_id: toWallet.id,
+            amount: amount,
+            from_transaction_id: transferOutTransaction.id,
+            to_transaction_id: transferInTransaction.id,
+            currency: fromWallet.currency,
+            description: description || null,
+          },
+          trx,
+        );
+
+        await this.withdrawFromWallet(fromWallet, transfer.amount, trx);
+        await this.depositToWallet(toWallet, transfer.amount, trx);
+      });
+    } catch (error) {
+      HelperService.errorHandler(error, 'Failed to transfer funds');
     }
   }
 

@@ -24,33 +24,24 @@ export class BaseRepository<T extends TableEntity> {
   ): Promise<PagedResult<Knex.ResolveTableType<T, 'base'>>> {
     const { filters = [], sorts = [], page = 1, size = 10 } = searchRequest;
 
-    const query = this.knex(this.tableName)
-      .whereNull('deleted_at')
-      .whereRaw('1=1');
+    // 1. Build base query
+    let baseQuery = this.createBaseQuery(this.tableName);
 
-    this.applyFilters(query, filters);
-    this.applySorts(query, sorts);
+    // 2. Apply filters and sorts
+    this.applyFilters(baseQuery, filters);
+    this.applySorts(baseQuery, sorts);
 
-    const totalQuery = query
-      .clone()
-      .clearSelect()
-      .clearOrder()
-      .count({ count: '*' })
-      .first();
+    // 3. Optionally select specific fields
+    baseQuery = this.applySelects(baseQuery);
 
-    const itemsQuery = query
-      .clone()
-      .offset((page - 1) * size)
-      .limit(size)
-      .select('*');
+    // 4. Get total count (cloned query)
+    const total = await this.getTotalCount(baseQuery);
 
-    const [totalResult, items] = await Promise.all([totalQuery, itemsQuery]);
-
-    // const items = rawItems as T[];
-    const total = Number(totalResult?.count ?? 0);
+    // 5. Get paged items (cloned query)
+    const items = await this.getPagedItems(baseQuery, page, size);
 
     return {
-      items: items as Knex.ResolveTableType<T, 'base'>[],
+      items: items,
       total,
       page,
       size,
@@ -58,12 +49,54 @@ export class BaseRepository<T extends TableEntity> {
     };
   }
 
-  async findAll(trx?: Knex.Transaction): Promise<T[]> {
+  protected createBaseQuery(
+    tableName: keyof Tables,
+  ): Knex.QueryBuilder<Knex.TableType<keyof Tables>> {
+    return this.knex(tableName)
+      .whereNull(`${tableName}.deleted_at`)
+      .whereRaw('1=1');
+  }
+
+  protected async getTotalCount(query: Knex.QueryBuilder): Promise<number> {
+    const result = (await query
+      .clone()
+      .clearSelect()
+      .clearOrder()
+      .count({ count: '*' })
+      .first()) as { count: string };
+
+    return Number(result?.count ?? 0);
+  }
+
+  protected applySelects(
+    query: Knex.QueryBuilder<Knex.TableType<keyof Tables>>,
+    selects?: string[],
+  ): Knex.QueryBuilder<Knex.TableType<keyof Tables>> {
+    if (selects && selects.length > 0) {
+      return query.select(selects.map((key) => `${key}`));
+    }
+    return query.select(`${this.tableName}.*`);
+  }
+
+  protected async getPagedItems(
+    query: Knex.QueryBuilder,
+    page: number,
+    size: number,
+  ): Promise<Knex.ResolveTableType<T, 'base'>[]> {
+    return (await query
+      .clone()
+      .offset((page - 1) * size)
+      .limit(size)) as Knex.ResolveTableType<T, 'base'>[];
+  }
+
+  async findAll(
+    trx?: Knex.Transaction,
+  ): Promise<Knex.ResolveTableType<T, 'base'>[]> {
     const rows = await (trx || this.knex)(this.tableName)
       .whereNull('deleted_at')
       .select('*');
 
-    return rows as unknown as T[];
+    return rows as Knex.ResolveTableType<T, 'base'>[];
   }
 
   async findOne(
@@ -93,9 +126,12 @@ export class BaseRepository<T extends TableEntity> {
   async insert(
     data: Knex.ResolveTableType<T, 'insert'>,
     trx?: Knex.Transaction,
-  ): Promise<number> {
-    const [created] = await (trx || this.knex)(this.tableName).insert(data);
-    return created;
+  ): Promise<Knex.ResolveTableType<T, 'base'>> {
+    const [created] = await (trx || this.knex)(this.tableName).insert(
+      data,
+      '*',
+    );
+    return created as Knex.ResolveTableType<T, 'base'>;
   }
 
   async update(

@@ -24,8 +24,9 @@ export class UnitOfWork {
    */
   async executeInTransaction<T>(
     fn: (trx: Knex.Transaction) => Promise<T>,
+    options?: Knex.TransactionConfig,
   ): Promise<T> {
-    const trx = await this.knex.transaction();
+    const trx = await this.knex.transaction(options);
     try {
       const result = await fn(trx);
       await trx.commit();

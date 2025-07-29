@@ -12,6 +12,7 @@ import { map } from 'rxjs/operators';
 import { Response } from 'express';
 import { ApiResponseDto } from '../dtos';
 import { RESPONSE_MESSAGE_KEY } from '../decorators';
+import { HelperService } from '../services/helper.service';
 
 @Injectable()
 export class ResponseInterceptor<T>
@@ -43,7 +44,7 @@ export class ResponseInterceptor<T>
 
         return new ApiResponseDto<T>(
           true,
-          data as T,
+          HelperService.keysToCamel(data) as T,
           message ?? 'Request successful',
           statusCode,
         );

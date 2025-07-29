@@ -66,13 +66,7 @@ export async function up(knex: Knex): Promise<void> {
     table.foreign('to_wallet_id').references('wallets.id').onDelete('CASCADE');
     table.decimal('amount', 15, 2).notNullable();
     table.string('currency', 3).defaultTo('NGN');
-    table
-      .string('status', 20)
-      .notNullable()
-      .defaultTo('PENDING')
-      .checkIn(TRANSACTION_STATUSES);
     table.text('description').nullable();
-    table.decimal('fee', 15, 2).defaultTo(0.0);
     table.integer('from_transaction_id').unsigned().nullable();
     table.integer('to_transaction_id').unsigned().nullable();
     table

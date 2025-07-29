@@ -2,6 +2,7 @@ import { Knex } from 'knex';
 import type { BaseEntity } from '../entities';
 import { RoleEnum, StatusEnum } from 'src/common/enums';
 import Decimal from 'decimal.js';
+import { Exclude } from 'class-transformer';
 
 // Define transaction types and statuses as string literals to mimic ENUMs
 type TransactionType =
@@ -20,6 +21,7 @@ declare module 'knex/types/tables' {
     email_verified_at: Date | null;
     status: StatusEnum;
     role: RoleEnum;
+    username?: string | null;
   }
 
   interface Wallet extends BaseEntity {
@@ -44,9 +46,7 @@ declare module 'knex/types/tables' {
     to_wallet_id: number;
     amount: Decimal;
     currency: string;
-    status: TransactionStatus;
     description: string | null;
-    fee: Decimal;
     from_transaction_id: number | null;
     to_transaction_id: number | null;
   }
@@ -100,19 +100,16 @@ declare module 'knex/types/tables' {
         | 'from_wallet_id'
         | 'to_wallet_id'
         | 'currency'
-        | 'status'
         | 'description'
         | 'from_transaction_id'
         | 'to_transaction_id'
       > &
         Partial<Pick<Transfer, 'created_at' | 'updated_at' | 'deleted_at'>> & {
           amount: number;
-          fee: number;
         },
-      Partial<Omit<Transfer, 'id' | 'amount' | 'fee'>> &
+      Partial<Omit<Transfer, 'id' | 'amount'>> &
         Partial<{
           amount: number;
-          fee: number;
         }>
     >;
   }

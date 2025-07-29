@@ -3,8 +3,10 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { plainToInstance } from 'class-transformer';
 import { SearchRequestDto } from 'src/common/dtos';
 import { HelperService } from 'src/common/services/helper.service';
+import { User } from 'src/db/entities';
 import { UserRepository } from 'src/db/repositories/user.repository';
 import { WalletService } from 'src/wallet/wallet.service';
 
@@ -17,9 +19,12 @@ export class UsersService {
 
   async searchUsers(req: SearchRequestDto) {
     try {
-      return await this.userRepository.findPaged(req);
+      const result = await this.userRepository.findPaged(req);
+      result.items = plainToInstance(User, result.items);
+      return result;
     } catch (error) {
       console.error(error);
+      HelperService.errorHandler(error, 'Failed to search users');
     }
   }
 
@@ -54,5 +59,26 @@ export class UsersService {
     } catch (error) {
       HelperService.errorHandler(error, 'Failed to retrieve wallet');
     }
+  }
+
+  async usernameExists(username: string, userId?: number): Promise<boolean> {
+    const user = await this.userRepository.findOne({ username });
+    return !!user && user.id !== userId;
+  }
+
+  async updateUsername(userId: number, newUsername: string): Promise<void> {
+    const userExists = await this.usernameExists(newUsername, userId);
+    if (userExists) {
+      throw new ConflictException('Username already taken');
+    }
+    await this.userRepository.update(userId, { username: newUsername });
+  }
+
+  async getByUsername(username: string) {
+    const user = await this.userRepository.findOne({ username });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    return user;
   }
 }

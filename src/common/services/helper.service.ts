@@ -1,8 +1,13 @@
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-return */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 // import { ConflictException, ServiceUnavailableException } from '@nestjs/common';
 import { randomInt } from 'node:crypto';
 import { Transform } from 'class-transformer';
 import { camelCase } from 'lodash';
 import { HttpException } from '@nestjs/common';
+import Decimal from 'decimal.js';
 
 export class HelperService {
   // static isQueryFailedError = (
@@ -77,7 +82,6 @@ export class HelperService {
     Object.entries(data).forEach(([key, value]) => {
       const camelKey = camelCase(key);
       if (camelKey in instance) {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         instance[camelKey] = value;
       }
     });
@@ -128,5 +132,29 @@ export class HelperService {
       }
     }
     return row;
+  }
+
+  static keysToCamel(obj: any): any {
+    if (Array.isArray(obj)) {
+      return obj.map((v) => HelperService.keysToCamel(v));
+    }
+
+    if (
+      obj !== null &&
+      typeof obj === 'object' &&
+      !(obj instanceof Date) &&
+      !(obj instanceof Buffer) &&
+      !(obj instanceof Map) &&
+      !(obj instanceof Set) &&
+      !(obj instanceof Decimal)
+    ) {
+      return Object.entries(obj).reduce((acc, [key, value]) => {
+        const camelKey = camelCase(key);
+        acc[camelKey] = HelperService.keysToCamel(value);
+        return acc;
+      }, {} as any);
+    }
+
+    return obj;
   }
 }
