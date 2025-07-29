@@ -126,12 +126,9 @@ export class BaseRepository<T extends TableEntity> {
   async insert(
     data: Knex.ResolveTableType<T, 'insert'>,
     trx?: Knex.Transaction,
-  ): Promise<Knex.ResolveTableType<T, 'base'>> {
-    const [created] = await (trx || this.knex)(this.tableName).insert(
-      data,
-      '*',
-    );
-    return created as Knex.ResolveTableType<T, 'base'>;
+  ): Promise<number> {
+    const [created] = await (trx || this.knex)(this.tableName).insert(data);
+    return created;
   }
 
   async update(

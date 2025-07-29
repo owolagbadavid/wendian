@@ -144,7 +144,7 @@ export class WalletService {
 
       return successResponse;
     } catch (error) {
-      HelperService.errorHandler(error);
+      HelperService.errorHandler(error, 'Failed to verify payment');
     }
   }
 
@@ -170,18 +170,15 @@ export class WalletService {
       throw new NotFoundException('Wallet not found for one of the users');
     }
 
-    await this.walletTransfer(fromWallet.id, toWallet.id, amount, description);
+    await this.walletTransfer(fromWallet, toWallet, amount, description);
   }
 
   async walletTransfer(
-    fromWalletId: number,
-    toWalletId: number,
+    fromWallet: Wallet,
+    toWallet: Wallet,
     amount: number,
     description?: string,
   ) {
-    const fromWallet = await this.findById(fromWalletId);
-    const toWallet = await this.findById(toWalletId);
-
     if (fromWallet.currency !== toWallet.currency) {
       throw new BadRequestException('Wallets must have the same currency');
     }
@@ -222,23 +219,24 @@ export class WalletService {
           trx,
         );
 
-        const transfer = await this.transferRepo.insert(
+        await this.transferRepo.insert(
           {
             from_wallet_id: fromWallet.id,
             to_wallet_id: toWallet.id,
             amount: amount,
-            from_transaction_id: transferOutTransaction.id,
-            to_transaction_id: transferInTransaction.id,
+            from_transaction_id: transferOutTransaction,
+            to_transaction_id: transferInTransaction,
             currency: fromWallet.currency,
             description: description || null,
           },
           trx,
         );
 
-        await this.withdrawFromWallet(fromWallet, transfer.amount, trx);
-        await this.depositToWallet(toWallet, transfer.amount, trx);
+        await this.withdrawFromWallet(fromWallet, new Decimal(amount), trx);
+        await this.depositToWallet(toWallet, new Decimal(amount), trx);
       });
     } catch (error) {
+      console.error('Error during wallet transfer:', error);
       HelperService.errorHandler(error, 'Failed to transfer funds');
     }
   }
