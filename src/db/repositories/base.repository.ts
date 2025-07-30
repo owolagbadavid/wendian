@@ -143,6 +143,16 @@ export class BaseRepository<T extends TableEntity> {
     return created;
   }
 
+  async insertMany(
+    data: Knex.ResolveTableType<T, 'insert'>[],
+    trx?: Knex.Transaction,
+  ): Promise<number> {
+    const [created] = await (trx || this.knex)(this.tableName).insert(
+      data as any[],
+    );
+    return created;
+  }
+
   async update(
     id: number,
     data: Knex.ResolveTableType<T, 'update'>,

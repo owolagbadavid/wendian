@@ -83,4 +83,18 @@ export abstract class PaymentService {
     accountNumber: string;
     accountName: string;
   }>;
+
+  abstract createVirtualAccount(payload: {
+    email: string;
+    bvn: string;
+    phoneNumber: string;
+    reference: string;
+    firstName: string;
+    lastName: string;
+  }): Promise<{
+    accountNumber: string;
+    bankName: string;
+    reference: string;
+    expiryDate: string;
+  }>;
 }

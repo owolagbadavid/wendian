@@ -350,4 +350,58 @@ export class FlutterwaveService extends PaymentService {
       throw error;
     }
   }
+
+  async createVirtualAccount(payload: {
+    email: string;
+    bvn: string;
+    phoneNumber: string;
+    reference: string;
+    firstName: string;
+    lastName: string;
+  }): Promise<{
+    accountNumber: string;
+    bankName: string;
+    reference: string;
+    expiryDate: string;
+  }> {
+    try {
+      const response = await this.flw.VirtualAcct.create({
+        email: payload.email,
+        bvn: payload.bvn,
+        tx_ref: payload.reference,
+        // phonenumber: payload.phoneNumber,
+        // firstname: payload.firstName,
+        // lastname: payload.lastName,
+        is_permanent: true,
+        narration: `Virtual Account Creation for ${payload.firstName} ${payload.lastName}`,
+      });
+
+      if (response.status !== 'success') {
+        throw new BadRequestException(
+          response.message || 'Virtual account creation failed',
+        );
+      }
+
+      if (!response.data) {
+        throw new BadRequestException(
+          response?.message || 'No data found for the virtual account creation',
+        );
+      }
+
+      const data = response.data;
+
+      const res = {
+        accountNumber: data.account_number,
+        bankName: data.bank_name,
+        reference: data.order_ref,
+        expiryDate: data.expiry_date,
+      };
+
+      this.logger.log('Virtual account created successfully');
+      return res;
+    } catch (error) {
+      this.logger.error('Error creating virtual account', error);
+      throw error;
+    }
+  }
 }

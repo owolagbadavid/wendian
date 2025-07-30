@@ -158,28 +158,36 @@ declare module 'flutterwave-node-v3' {
     };
   }
 
-  // interface PaymentPayload {
-  //   amount: number;
-  //   tx_ref: string;
-  //   currency: string;
-  //   redirect_url: string;
-  //   configuration: {
-  //     session_duration: number;
-  //   };
-  //   customer: {
-  //     email: string;
-  //     name: string;
-  //   };
-  // }
+  interface CreateVirtualAccountPayload {
+    email: string;
+    is_permanent: boolean;
+    bvn: string;
+    tx_ref: string;
+    // phonenumber: string;
+    // firstname: string;
+    // lastname: string;
+    narration: string;
+  }
 
-  // interface PaymentResponse {
-  //   status: string;
-  //   message: string;
-  //   data: {
-  //     link: string;
-  //   };
-  // }
+  interface VirtualAccountResponse {
+    status: string;
+    message: string;
+    data: VirtualAccountData;
+  }
 
+  interface VirtualAccountData {
+    response_code: string;
+    response_message: string;
+    flw_ref: string;
+    order_ref: string;
+    account_number: string;
+    frequency: string;
+    bank_name: string;
+    created_at: string;
+    expiry_date: string;
+    note: string;
+    amount?: string | null;
+  }
   class Flutterwave {
     constructor(publicKey: string, secretKey: string);
 
@@ -208,6 +216,12 @@ declare module 'flutterwave-node-v3' {
       verify_Account: (
         payload: VerifyAccountPayload,
       ) => Promise<VerifyAccountResponse>;
+    };
+
+    VirtualAcct: {
+      create: (
+        payload: CreateVirtualAccountPayload,
+      ) => Promise<VirtualAccountResponse>;
     };
   }
 

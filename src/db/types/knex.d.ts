@@ -27,6 +27,8 @@ declare module 'knex/types/tables' {
     status: StatusEnum;
     role: RoleEnum;
     username?: string | null;
+    first_name: string;
+    last_name: string;
   }
 
   interface Wallet extends BaseEntity {
@@ -56,6 +58,22 @@ declare module 'knex/types/tables' {
     to_transaction_id: number | null;
   }
 
+  interface VirtualAccount extends BaseEntity {
+    bank_code?: string | null;
+    bank_name?: string | null;
+    account_number: string;
+    reference: string;
+    expiry_date: Date | null;
+    wallet_id: number;
+    bvn: string;
+    phone_number: string;
+  }
+
+  interface Bank extends BaseEntity {
+    bank_code: string;
+    bank_name: string;
+  }
+
   interface Tables {
     users: Knex.CompositeTableType<
       User,
@@ -67,6 +85,8 @@ declare module 'knex/types/tables' {
         | 'role'
         | 'email_verified_at'
         | 'is_email_verified'
+        | 'first_name'
+        | 'last_name'
       > &
         Partial<Pick<User, 'created_at' | 'updated_at' | 'deleted_at'>>,
       Partial<Omit<User, 'id'>>
@@ -116,6 +136,37 @@ declare module 'knex/types/tables' {
         Partial<{
           amount: number;
         }>
+    >;
+
+    virtual_accounts: Knex.CompositeTableType<
+      VirtualAccount,
+      Pick<
+        VirtualAccount,
+        | 'bank_code'
+        | 'account_number'
+        | 'reference'
+        | 'wallet_id'
+        | 'expiry_date'
+        | 'bvn'
+        | 'phone_number'
+        | 'bank_name'
+      > &
+        Partial<
+          Pick<
+            VirtualAccount,
+            'expiry_date' | 'created_at' | 'updated_at' | 'deleted_at'
+          >
+        >,
+      Partial<Omit<VirtualAccount, 'id'>> &
+        Partial<{ expiry_date: Date | null }>
+    >;
+
+    banks: Knex.CompositeTableType<
+      Bank,
+      Pick<Bank, 'bank_code' | 'bank_name'> &
+        Partial<Pick<Bank, 'created_at' | 'updated_at' | 'deleted_at'>>,
+      Partial<Omit<Bank, 'id'>> &
+        Partial<{ bank_code: string; bank_name: string }>
     >;
   }
 }

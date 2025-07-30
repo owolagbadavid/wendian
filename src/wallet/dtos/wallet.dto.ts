@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-import { IsNotEmpty, IsNumberString, IsString } from 'class-validator';
+import { IsNotEmpty, IsNumberString, IsString, Length } from 'class-validator';
 
 import { IsValidDecimal } from 'src/common/validators/validate-decimal';
 
@@ -52,4 +52,17 @@ export class WalletTransferDto {
   @ApiProperty({ required: false })
   @IsString()
   description?: string;
+}
+
+export class CreateWalletDto {
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  @Length(11, 11)
+  bvn: string;
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  phoneNumber: string;
 }

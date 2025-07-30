@@ -13,6 +13,8 @@ import { HttpModule } from '@nestjs/axios';
 import { WalletModule } from './wallet/wallet.module';
 import { FlutterwaveService } from './common/services/flutterwave.service';
 import { TransactionsModule } from './transactions/transactions.module';
+import { KarmaService } from './common/services/karma.service';
+import { PaymentService } from './common/services/payment.service';
 
 const cacheConfig: CacheModuleAsyncOptions = {
   isGlobal: true,
@@ -69,7 +71,11 @@ const cacheConfig: CacheModuleAsyncOptions = {
   ],
   controllers: [AppController],
   providers: [
-    FlutterwaveService,
+    KarmaService,
+    {
+      provide: PaymentService,
+      useClass: FlutterwaveService,
+    },
     AppService,
     {
       provide: APP_INTERCEPTOR,

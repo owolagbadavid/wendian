@@ -7,6 +7,8 @@ import { WalletRepository } from './repositories/wallet.repository';
 import { TransactionRepository } from './repositories/transaction.repository';
 import { UserRepository } from './repositories/user.repository';
 import { TransferRepository } from './repositories/transfer.repository';
+import { VirtualAccountRepository } from './repositories/virtual-account.repository';
+import { BankRepository } from './repositories/bank.repository';
 
 export const PROVIDER_NAME = 'KNEX_CONNECTION';
 
@@ -48,6 +50,16 @@ export const knexProvider = {
       useFactory: (knex: Knex) => new TransferRepository(knex),
       inject: [knexProvider.provide],
     },
+    {
+      provide: VirtualAccountRepository,
+      useFactory: (knex: Knex) => new VirtualAccountRepository(knex),
+      inject: [knexProvider.provide],
+    },
+    {
+      provide: BankRepository,
+      useFactory: (knex: Knex) => new BankRepository(knex),
+      inject: [knexProvider.provide],
+    },
   ],
   exports: [
     knexProvider.provide,
@@ -56,6 +68,8 @@ export const knexProvider = {
     TransactionRepository,
     UserRepository,
     TransferRepository,
+    VirtualAccountRepository,
+    BankRepository,
   ],
 })
 export class KnexModule {}

@@ -20,6 +20,8 @@ import { Queue } from 'bullmq';
 import { InjectQueue } from '@nestjs/bullmq';
 import { TransactionJobsEnum } from 'src/transactions/transaction-jobs.enum';
 import { PaymentService } from 'src/common/services/payment.service';
+import { VirtualAccountRepository } from 'src/db/repositories/virtual-account.repository';
+import { BankRepository } from 'src/db/repositories/bank.repository';
 
 @Injectable()
 export class WalletService {
@@ -31,16 +33,67 @@ export class WalletService {
     private readonly userRepo: UserRepository,
     private readonly config: ConfigService,
     private readonly uow: UnitOfWork,
+    private readonly virtualAccountRepo: VirtualAccountRepository,
+    private readonly bankRepo: BankRepository,
     @InjectQueue('transactions') private readonly transactionsQueue: Queue,
   ) {}
 
-  async createWallet(userId: number) {
-    return await this.walletRepository.insert({
-      user_id: userId,
-      balance: 0,
-      is_active: true,
-      currency: DEFAULT_CURRENCY,
-    });
+  async handleWalletCreation(userId: number, bvn: string, phoneNumber: string) {
+    try {
+      const user = await this.userRepo.findById(userId);
+      if (!user) {
+        throw new NotFoundException('User not found');
+      }
+
+      const reference = HelperService.generateReference();
+      await this.uow.executeInTransaction(async (trx: Knex.Transaction) => {
+        const walletId = await this.createWallet(userId, trx);
+
+        const response = await this.paymentService.createVirtualAccount({
+          bvn,
+          phoneNumber,
+          reference,
+          firstName: user.first_name,
+          lastName: user.last_name,
+          email: user.email,
+        });
+
+        const bank = await this.bankRepo.findOne({
+          bank_name: response.bankName,
+        });
+
+        await this.virtualAccountRepo.insert(
+          {
+            bank_code: bank ? bank.bank_code : null,
+            bank_name: response.bankName,
+            account_number: response.accountNumber,
+            wallet_id: walletId,
+            bvn,
+            phone_number: phoneNumber,
+            expiry_date:
+              response.expiryDate == 'N/A'
+                ? null
+                : new Date(response.expiryDate),
+            reference: response.reference,
+          },
+          trx,
+        );
+      });
+    } catch (error) {
+      HelperService.errorHandler(error, 'Failed to create wallet');
+    }
+  }
+
+  async createWallet(userId: number, trx?: Knex.Transaction) {
+    return await this.walletRepository.insert(
+      {
+        user_id: userId,
+        balance: 0,
+        is_active: true,
+        currency: DEFAULT_CURRENCY,
+      },
+      trx,
+    );
   }
 
   async findByUserId(userId: number) {

@@ -12,12 +12,13 @@ import {
 } from '@nestjs/common';
 import { SearchRequestDto } from 'src/common/dtos';
 import { UsersService } from '../services/users.service';
-import { ResponseMessage, UserContext } from 'src/common/decorators';
+import { Public, ResponseMessage, UserContext } from 'src/common/decorators';
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from 'src/auth/guards';
 import { UsernameDto } from '../dto/user.dto';
 import { plainToInstance } from 'class-transformer';
 import { User } from 'src/db/entities';
+import { CreateWalletDto } from 'src/wallet/dtos/wallet.dto';
 
 @ApiBearerAuth()
 @UseInterceptors(ClassSerializerInterceptor)
@@ -40,8 +41,8 @@ export class UsersController {
 
   @ResponseMessage('Wallet created successfully')
   @Post('wallets')
-  createWallet(@UserContext('sub') userId: string) {
-    return this.usersService.createWallet(parseInt(userId, 10));
+  createWallet(@UserContext('sub') userId: string, @Body() body: CreateWalletDto) {
+    return this.usersService.createWallet(parseInt(userId, 10), body.bvn, body.phoneNumber);
   }
 
   @ResponseMessage('Wallet details fetched successfully')
@@ -78,5 +79,10 @@ export class UsersController {
       User,
       await this.usersService.getByUsername(username),
     );
+  }
+
+  @Get('karma/:email')
+  async checkKarma(@Param('email') email: string) {
+    return this.usersService.checkKarma(email);
   }
 }

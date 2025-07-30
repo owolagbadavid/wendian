@@ -5,6 +5,9 @@ import {
   BadRequestException,
   UnauthorizedException,
   Inject,
+  NotFoundException,
+  HttpException,
+  InternalServerErrorException,
 } from '@nestjs/common';
 
 import { InjectQueue } from '@nestjs/bullmq';
@@ -20,12 +23,14 @@ import { NotificationEnum } from 'src/mail/notification.enum';
 import { RoleEnum, StatusEnum } from 'src/common/enums';
 
 import { ConfigService } from '@nestjs/config';
+import { UsersService } from './users.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     private tokenProvider: TokenProvider,
     private userRepository: UserRepository,
+    private usersService: UsersService,
     private config: ConfigService,
     @Inject(CACHE_MANAGER) private cache: Cache,
     @InjectQueue('mail') private mailQueue: Queue,
@@ -63,36 +68,6 @@ export class AuthService {
       console.error('Error finding user:', error);
       throw error;
     }
-
-    // const user = await this.userRepository.findOne({
-    //   where: { email: loginDto.email },
-    //   relations: {
-    //     status: true,
-    //     userRoles: {
-    //       role: true,
-    //     },
-    //     twoFactorSetting: true,
-    //   },
-    // });
-    // if (!user) {
-    //   throw new UnauthorizedException('Invalid credentials');
-    // }
-    // if (!user.isEmailVerified) {
-    //   throw new UnauthorizedException('Email not verified');
-    // }
-    // // todo: check status
-    // if (!PasswordHasher.verifyPassword(loginDto.password, user.passwordHash)) {
-    //   throw new UnauthorizedException('Invalid credentials');
-    // }
-    // const roles = user.userRoles.map((ur) => ur.role.code);
-    // const accessToken = this.tokenProvider.signJwt(
-    //   loginDto.email,
-    //   roles,
-    //   user.id,
-    // );
-    // return {
-    //   accessToken,
-    // };
   }
 
   async forgotPassword(email: string) {
@@ -196,6 +171,26 @@ export class AuthService {
 
   async registerUser({ email, firstName, lastName }: RegisterDto) {
     try {
+      if (this.config.get('NODE_ENV') === 'production') {
+        // only check karma in production
+        try {
+          const karmaResponse = await this.usersService.checkKarma(email);
+
+          if (karmaResponse) {
+            throw new BadRequestException('You are not eligible to register');
+          }
+        } catch (error) {
+          if (error instanceof NotFoundException) {
+            // User not found, proceed with registration
+          }
+          if (error instanceof HttpException) {
+            throw error;
+          } else {
+            throw new InternalServerErrorException('Karma check failed');
+          }
+        }
+      }
+
       const existingUser = await this.userRepository.findByEmail(email);
       if (existingUser) {
         throw new BadRequestException('Email is already registered');
@@ -208,6 +203,8 @@ export class AuthService {
         role: RoleEnum.CUSTOMER,
         is_email_verified: false,
         email_verified_at: null,
+        first_name: firstName,
+        last_name: lastName,
       });
 
       // Send verification email

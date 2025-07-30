@@ -6,10 +6,11 @@ import { AuthModule } from 'src/auth/auth.module';
 import { UsersController } from './controllers/users.controller';
 import { UsersService } from './services/users.service';
 import { WalletModule } from 'src/wallet/wallet.module';
+import { KarmaService } from 'src/common/services/karma.service';
 
 @Module({
   controllers: [AuthController, UsersController],
-  providers: [AuthService, UsersService],
+  providers: [AuthService, UsersService, KarmaService],
   imports: [
     WalletModule,
     AuthModule,

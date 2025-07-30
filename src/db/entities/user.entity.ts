@@ -11,4 +11,6 @@ export class User extends BaseEntity {
   status: StatusEnum;
   role: RoleEnum;
   username?: string | null;
+  first_name: string;
+  last_name: string;
 }
