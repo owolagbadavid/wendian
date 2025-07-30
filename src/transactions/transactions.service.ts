@@ -145,6 +145,7 @@ export class TransactionsService {
       } else {
         if (payload['event.type'] === 'BANK_TRANSFER_TRANSACTION') {
           // handle virtual account transfers
+          // todo: docs not clear on this
         } else {
           console.warn('Unhandled charge type:', transactionRef);
         }
