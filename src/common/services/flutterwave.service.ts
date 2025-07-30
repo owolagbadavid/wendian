@@ -393,7 +393,8 @@ export class FlutterwaveService extends PaymentService {
       const res = {
         accountNumber: data.account_number,
         bankName: data.bank_name,
-        reference: data.order_ref,
+        orderReference: data.order_ref,
+        reference: payload.reference,
         expiryDate: data.expiry_date,
       };
 

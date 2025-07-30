@@ -131,7 +131,7 @@ export class WalletService {
           fullName: user.email,
           email: user.email,
           currency: wallet.currency,
-          callbackUrl: 'https://localhost:3000/wallet/callback',
+          callbackUrl: `${this.config.get<string>('FRONTEND_URL')}/wallet`,
         },
         reference,
       );
@@ -153,7 +153,7 @@ export class WalletService {
     }
   }
 
-  async verifyPayment(userId: number, reference: string) {
+  async verifyFundingPayment(reference: string, throwError = true) {
     const transaction = await this.transactionRepo.findOne({
       internal_reference: reference,
     });
@@ -172,6 +172,14 @@ export class WalletService {
       return successResponse;
     }
 
+    if (transaction.status === 'FAILED') {
+      if (throwError) {
+        throw new BadRequestException('Payment already failed');
+      } else {
+        return { error: 'Payment already failed' };
+      }
+    }
+
     const wallet = await this.findById(transaction.wallet_id);
 
     if (!wallet) {
@@ -181,6 +189,18 @@ export class WalletService {
     try {
       const response =
         await this.paymentService.verifyTransactionBySystemRef(reference);
+
+      if (response.status === 'failed') {
+        await this.transactionRepo.update(transaction.id, {
+          status: 'FAILED',
+          external_reference: response.externalRef,
+        });
+        if (throwError) {
+          throw new BadRequestException('Payment failed');
+        } else {
+          return { error: 'Payment failed' };
+        }
+      }
 
       if (
         response.status !== 'successful' ||

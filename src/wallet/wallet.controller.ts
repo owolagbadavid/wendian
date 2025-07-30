@@ -32,10 +32,7 @@ export class WalletController {
     @UserContext('sub') userId: string,
     @Body() body: VerifyPaymentDto,
   ) {
-    return await this.walletService.verifyPayment(
-      parseInt(userId, 10),
-      body.reference,
-    );
+    return await this.walletService.verifyFundingPayment(body.reference);
   }
 
   @Post('transfer')

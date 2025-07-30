@@ -42,7 +42,7 @@ export class TransactionsService {
       }
 
       if (transaction.status !== 'PENDING') {
-        throw new Error('Transfer already verified or completed');
+        return;
       }
 
       if (response.status == 'SUCCESSFUL') {
@@ -102,5 +102,54 @@ export class TransactionsService {
     );
 
     await this.walletService.depositToWallet(wallet, transaction.amount, trx);
+  }
+
+  async webhookHandler(payload: {
+    data?: {
+      id?: number;
+      tx_ref?: string;
+      reference?: string;
+      meta_data?: {
+        originatoraccountnumber?: string;
+        originatorname?: string;
+        bankname?: string;
+      };
+    };
+    event?: string;
+    'event.type'?: string;
+  }) {
+    if (
+      payload.event !== 'transfer.completed' &&
+      payload.event !== 'charge.completed'
+    ) {
+      console.warn('Unhandled event type:', payload.event);
+      return;
+    }
+
+    const transactionRef = payload.data?.tx_ref;
+    const externalReference = payload.data?.id?.toString();
+    const transferRef = payload.data?.reference;
+
+    if (payload.event === 'transfer.completed') {
+      if (transferRef?.startsWith(TransactionPrefixEnum.WITHDRAWAL)) {
+        await this.verifyWithdrawal(externalReference!);
+      } else {
+        console.warn('Unhandled transfer type:', transactionRef);
+      }
+      return;
+    }
+
+    if (payload.event === 'charge.completed') {
+      if (transactionRef?.startsWith(TransactionPrefixEnum.DEPOSIT)) {
+        await this.walletService.verifyFundingPayment(transactionRef, false);
+      } else {
+        if (payload['event.type'] === 'BANK_TRANSFER_TRANSACTION') {
+          // handle virtual account transfers
+        } else {
+          console.warn('Unhandled charge type:', transactionRef);
+        }
+      }
+      return;
+    }
   }
 }

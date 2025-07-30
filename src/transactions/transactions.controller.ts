@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { TransactionsService } from './transactions.service';
 import { ConfigService } from '@nestjs/config';
+import { createHmac } from 'node:crypto';
 
 @Controller('transactions')
 export class TransactionsController {
@@ -16,8 +17,11 @@ export class TransactionsController {
   ) {}
 
   @Post('flw-webhook')
-  handleWebhook(@Headers('verif-hash') signature: string, @Body() body: any) {
-    const secretHash = this.config.get<string>('FLW_SECRET_HASH');
+  async handleWebhook(
+    @Headers('verif-hash') signature: string,
+    @Body() body: any,
+  ) {
+    const secretHash = this.config.get<string>('FLW_WEBHOOK_SECRET');
 
     if (!signature || signature !== secretHash) {
       throw new UnauthorizedException('Invalid signature');
@@ -25,7 +29,20 @@ export class TransactionsController {
 
     console.log('Received Flutterwave webhook:', body);
 
-    // TODO: Handle the payload, but quickly — or push to queue
+    await this.transactionsService.webhookHandler(body);
+
     return;
+  }
+
+  private isValidFlutterwaveWebhook(
+    rawBody: string,
+    signature: string,
+    secretHash: string,
+  ) {
+    const hash = createHmac('sha256', secretHash)
+      .update(rawBody)
+      .digest('base64');
+
+    return hash === signature;
   }
 }
