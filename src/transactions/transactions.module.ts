@@ -5,13 +5,17 @@ import { FlutterwaveService } from 'src/common/services/flutterwave.service';
 import { TransactionsProcessor } from './transactions.processor';
 import { WalletService } from 'src/wallet/wallet.service';
 import { BullModule } from '@nestjs/bullmq';
+import { PaymentService } from 'src/common/services/payment.service';
 
 @Global()
 @Module({
   controllers: [TransactionsController],
   providers: [
     TransactionsService,
-    FlutterwaveService,
+    {
+      provide: PaymentService,
+      useClass: FlutterwaveService,
+    },
     TransactionsProcessor,
     WalletService,
   ],

@@ -8,7 +8,6 @@ import { Knex } from 'knex';
 import { Wallet } from 'knex/types/tables';
 import { DEFAULT_CURRENCY, ONE_MINUTE_IN_MS } from 'src/common/constants';
 import { TransactionPrefixEnum } from 'src/common/enums';
-import { FlutterwaveService } from 'src/common/services/flutterwave.service';
 import { HelperService } from 'src/common/services/helper.service';
 import { TransactionRepository } from 'src/db/repositories/transaction.repository';
 import { TransferRepository } from 'src/db/repositories/transfer.repository';
@@ -20,6 +19,7 @@ import { ConfigService } from '@nestjs/config';
 import { Queue } from 'bullmq';
 import { InjectQueue } from '@nestjs/bullmq';
 import { TransactionJobsEnum } from 'src/transactions/transaction-jobs.enum';
+import { PaymentService } from 'src/common/services/payment.service';
 
 @Injectable()
 export class WalletService {
@@ -27,7 +27,7 @@ export class WalletService {
     private readonly walletRepository: WalletRepository,
     private readonly transactionRepo: TransactionRepository,
     private readonly transferRepo: TransferRepository,
-    private readonly paymentService: FlutterwaveService,
+    private readonly paymentService: PaymentService,
     private readonly userRepo: UserRepository,
     private readonly config: ConfigService,
     private readonly uow: UnitOfWork,
@@ -185,7 +185,20 @@ export class WalletService {
     amount: number,
     bankCode: string,
     accountNumber: string,
+    fail: boolean = false,
+    delay: number = 1,
   ) {
+    const [failure, success] = ['_PMCK_ST_F', '_PMCK'];
+    let suffix = '';
+
+    if (this.config.get<string>('NODE_ENV') !== 'production') {
+      if (fail) {
+        suffix = `${failure}DU_${delay}`;
+      } else {
+        suffix = `${success}DU_${delay}`;
+      }
+    }
+
     const wallet = await this.findByUserId(userId);
 
     if (!wallet) {
@@ -194,10 +207,7 @@ export class WalletService {
 
     const reference = HelperService.generateReference({
       prefix: TransactionPrefixEnum.WITHDRAWAL,
-      suffix:
-        this.config.get<string>('NODE_ENV') === 'production'
-          ? ''
-          : '_PMCK_ST_FDU_5',
+      suffix,
     });
 
     await this.paymentService.verifyAccount({

@@ -1,165 +1,86 @@
-/* eslint-disable @typescript-eslint/no-unsafe-return */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+export abstract class PaymentService {
+  abstract initiateTransfer(payload: {
+    bankCode: string;
+    accountNumber: string;
+    amount: number;
+    narration: string;
+    currency: string;
+    reference: string;
+    callbackUrl?: string;
+    debitCurrency?: string;
+  }): Promise<{
+    externalRef: string;
+    status: string;
+    amount: number;
+    currency: string;
+    internalRef: string;
+    accountNumber: string;
+    bankName: string;
+    bankCode: string;
+  }>;
 
-import { HttpService } from '@nestjs/axios';
-import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { firstValueFrom } from 'rxjs';
+  abstract getBanks(country: 'NG' | 'GH' | 'KE' | 'UG' | 'ZA' | 'TZ'): Promise<
+    {
+      code: string;
+      name: string;
+    }[]
+  >;
 
-// Generic interfaces for payment operations
-interface VirtualAccountRequest {
-  accountReference: string;
-  accountName: string;
-  customerEmail: string;
-  customerName: string;
-  bvn?: string;
-  nin?: string;
+  abstract getTransfer(transferId: string): Promise<{
+    externalRef: string;
+    status: string;
+    amount: number;
+    currency: string;
+    internalRef: string;
+    accountNumber: string;
+    bankName: string;
+    bankCode: string;
+  }>;
+
+  abstract verifyTransaction(ref: string): Promise<{
+    internalRef: string;
+    externalRef: string;
+    amount: number;
+    status: string;
+    currency: string;
+  }>;
+
+  abstract verifyTransactionBySystemRef(systemRef: string): Promise<{
+    internalRef: string;
+    externalRef: string;
+    amount: number;
+    status: string;
+    currency: string;
+  }>;
+
+  abstract refundTransaction(
+    ref: string,
+    amount: string,
+  ): Promise<{
+    externalRef: string;
+    status: string;
+    amount: number;
+    destination: string;
+  }>;
+
+  abstract initiatePayment(
+    payload: {
+      amount: number;
+      email: string;
+      fullName: string;
+      currency?: string;
+      callbackUrl: string;
+    },
+    ref: string,
+  ): Promise<{
+    link: string;
+  }>;
+
+  abstract verifyAccount(payload: {
+    accountNumber: string;
+    bankCode: string;
+  }): Promise<{
+    accountNumber: string;
+    accountName: string;
+  }>;
 }
-
-interface VirtualAccountResponse {
-  responseMessage: string;
-  responseBody: any;
-}
-
-interface FundTransferRequest {
-  amount: number;
-  reference: string;
-  narration: string;
-  destinationAccountNumber: string;
-  destinationBankCode: string;
-}
-
-interface FundTransferResponse {
-  responseCode: string;
-  requestSuccessful: boolean;
-  responseBody: any;
-}
-
-interface Bank {
-  code: string;
-  name: string;
-}
-
-interface BanksResponse {
-  banks: Bank[];
-}
-
-interface AccountValidationResponse {
-  responseMessage: string;
-  responseBody: any;
-}
-
-interface PaymentRequest {
-  amount: number;
-  customerName: string;
-  customerEmail: string;
-  paymentReference: string;
-  paymentDescription: string;
-  contractCode: string;
-  redirectUrl?: string;
-}
-
-interface PaymentResponse {
-  responseCode: string;
-  responseBody: any;
-}
-
-interface TransactionStatusResponse {
-  responseMessage: string;
-  responseBody: any;
-}
-
-interface TransferStatusResponse {
-  responseMessage: string;
-  responseBody: any;
-}
-
-interface AccessToken {
-  apiKey: string;
-  token: string;
-  expiresInDate: Date;
-}
-
-// Abstract Payment Service
-@Injectable()
-abstract class PaymentService {
-  protected accessTokens?: AccessToken;
-
-  constructor(
-    protected readonly httpService: HttpService,
-    protected readonly configService: ConfigService,
-  ) {}
-
-  protected async sendAsync<T>(
-    url: string,
-    method: string,
-    config: any,
-    data?: any,
-    ignoreAuthorization = false,
-  ): Promise<T> {
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
-
-    if (!ignoreAuthorization) {
-      const validToken = await this.getValidToken(config);
-      headers['Authorization'] = `Bearer ${validToken}`;
-    }
-
-    const response = await firstValueFrom(
-      this.httpService.request({
-        url,
-        method,
-        headers,
-        data,
-      }),
-    );
-
-    if (![200, 201, 202].includes(response.status)) {
-      const errorResponse = response.data;
-      throw new Error(JSON.stringify(errorResponse));
-    }
-
-    return response.data;
-  }
-
-  protected abstract getValidToken(config: any): Promise<string>;
-
-  abstract createVirtualAccount(
-    model: VirtualAccountRequest,
-  ): Promise<VirtualAccountResponse>;
-  abstract fundTransfer(
-    model: FundTransferRequest,
-  ): Promise<FundTransferResponse>;
-  abstract getBanks(): Promise<BanksResponse>;
-  abstract accountValidation(
-    accountNumber: string,
-    bankCode: string,
-  ): Promise<AccountValidationResponse>;
-  abstract initiatePayment(model: PaymentRequest): Promise<PaymentResponse>;
-  abstract getTransactionStatus(
-    transactionRef: string,
-  ): Promise<TransactionStatusResponse>;
-  abstract getTransactionStatusBySystemRef(
-    systemRef: string,
-  ): Promise<TransactionStatusResponse>;
-  abstract getTransferStatusByReference(
-    reference: string,
-  ): Promise<TransferStatusResponse>;
-  abstract authTransfer(reference: string, otp: string): Promise<void>;
-}
-
-export {
-  PaymentService,
-  VirtualAccountRequest,
-  VirtualAccountResponse,
-  FundTransferRequest,
-  FundTransferResponse,
-  BanksResponse,
-  AccountValidationResponse,
-  PaymentRequest,
-  PaymentResponse,
-  TransactionStatusResponse,
-  TransferStatusResponse,
-  AccessToken,
-};

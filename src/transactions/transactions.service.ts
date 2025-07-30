@@ -2,8 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Knex } from 'knex';
 import { TransactionPrefixEnum } from 'src/common/enums';
-import { FlutterwaveService } from 'src/common/services/flutterwave.service';
 import { HelperService } from 'src/common/services/helper.service';
+import { PaymentService } from 'src/common/services/payment.service';
 import { Transaction } from 'src/db/entities';
 import { TransactionRepository } from 'src/db/repositories/transaction.repository';
 import { TransferRepository } from 'src/db/repositories/transfer.repository';
@@ -19,7 +19,7 @@ export class TransactionsService {
     private readonly walletRepository: WalletRepository,
     private readonly transferRepository: TransferRepository,
     private readonly userRepository: UserRepository,
-    private readonly paymentService: FlutterwaveService,
+    private readonly paymentService: PaymentService,
     private readonly config: ConfigService,
     private readonly walletService: WalletService,
     private readonly uow: UnitOfWork,

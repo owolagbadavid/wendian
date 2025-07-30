@@ -6,9 +6,10 @@ import Flutterwave from 'flutterwave-node-v3';
 
 import { catchError, firstValueFrom } from 'rxjs';
 import { DEFAULT_CURRENCY } from '../constants';
+import { PaymentService } from './payment.service';
 
 @Injectable()
-export class FlutterwaveService {
+export class FlutterwaveService extends PaymentService {
   private readonly flw: Flutterwave;
   private readonly logger = new Logger(FlutterwaveService.name);
 
@@ -16,6 +17,7 @@ export class FlutterwaveService {
     private readonly configService: ConfigService,
     private httpService: HttpService,
   ) {
+    super();
     this.flw = new Flutterwave(
       this.configService.get<string>('FLW_PUBLIC_KEY') || '',
       this.configService.get<string>('FLW_SECRET_KEY') || '',
@@ -84,12 +86,20 @@ export class FlutterwaveService {
     }
   }
 
-  async getBanks(
-    country: 'NG' | 'GH' | 'KE' | 'UG' | 'ZA' | 'TZ',
-  ): Promise<any> {
+  async getBanks(country: 'NG' | 'GH' | 'KE' | 'UG' | 'ZA' | 'TZ'): Promise<
+    {
+      code: string;
+      name: string;
+    }[]
+  > {
     try {
       const payload = { country };
       const response = await this.flw.Bank.country(payload);
+
+      if (response.status !== 'success') {
+        throw new Error(response?.message || 'Bank fetch failed');
+      }
+
       this.logger.log('Banks fetched successfully');
       return response.data;
     } catch (error) {
@@ -215,8 +225,25 @@ export class FlutterwaveService {
     try {
       const payload = { id: ref, amount };
       const response = await this.flw.Transaction.refund(payload);
+
+      if (response.status !== 'success') {
+        throw new Error(response?.message || 'Transaction refund failed');
+      }
+
+      const data = response.data;
+      if (!data) {
+        throw new Error(response?.message || 'No data found ');
+      }
+
+      const res = {
+        externalRef: data.id.toString(),
+        status: data.status,
+        amount: data.amount_refunded,
+        destination: data.destination,
+      };
+
       this.logger.log('Refund initiated successfully');
-      return response;
+      return res;
     } catch (error) {
       this.logger.error('Error initiating refund', error);
       throw error;
@@ -245,7 +272,7 @@ export class FlutterwaveService {
             message: string;
             data: { link: string };
           }>(
-            'https://api.flutterwave.com/v3/payments',
+            this.configService.get<string>('FLW_BASE_URL') + '/payments',
             {
               amount: payload.amount,
               tx_ref: ref,
