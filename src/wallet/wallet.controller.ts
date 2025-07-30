@@ -6,6 +6,7 @@ import {
   FundWalletDto,
   VerifyPaymentDto,
   WalletTransferDto,
+  WalletWithdrawalDto,
 } from './dtos/wallet.dto';
 import { AuthGuard } from 'src/auth/guards';
 
@@ -47,6 +48,19 @@ export class WalletController {
       body.toUsername,
       parseFloat(body.amount),
       body.description,
+    );
+  }
+
+  @Post('withdraw')
+  async withdrawFunds(
+    @UserContext('sub') userId: string,
+    @Body() body: WalletWithdrawalDto,
+  ) {
+    return await this.walletService.walletWithdrawal(
+      parseInt(userId, 10),
+      parseFloat(body.amount),
+      body.bankCode,
+      body.accountNumber,
     );
   }
 }

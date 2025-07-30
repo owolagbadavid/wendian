@@ -9,7 +9,13 @@ const TRANSACTION_TYPES = [
   'REFUND',
 ];
 // Valid transaction statuses
-const TRANSACTION_STATUSES = ['PENDING', 'COMPLETED', 'FAILED', 'CANCELLED'];
+const TRANSACTION_STATUSES = [
+  'PENDING',
+  'COMPLETED',
+  'FAILED',
+  'CANCELLED',
+  'REFUNDED',
+];
 
 export async function up(knex: Knex): Promise<void> {
   await knex.schema.createTable('wallets', function (table) {

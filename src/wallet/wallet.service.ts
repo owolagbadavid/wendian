@@ -6,7 +6,7 @@ import {
 import Decimal from 'decimal.js';
 import { Knex } from 'knex';
 import { Wallet } from 'knex/types/tables';
-import { DEFAULT_CURRENCY } from 'src/common/constants';
+import { DEFAULT_CURRENCY, ONE_MINUTE_IN_MS } from 'src/common/constants';
 import { TransactionPrefixEnum } from 'src/common/enums';
 import { FlutterwaveService } from 'src/common/services/flutterwave.service';
 import { HelperService } from 'src/common/services/helper.service';
@@ -16,6 +16,11 @@ import { UserRepository } from 'src/db/repositories/user.repository';
 import { WalletRepository } from 'src/db/repositories/wallet.repository';
 import { UnitOfWork } from 'src/db/uow/uow';
 
+import { ConfigService } from '@nestjs/config';
+import { Queue } from 'bullmq';
+import { InjectQueue } from '@nestjs/bullmq';
+import { TransactionJobsEnum } from 'src/transactions/transaction-jobs.enum';
+
 @Injectable()
 export class WalletService {
   constructor(
@@ -24,7 +29,9 @@ export class WalletService {
     private readonly transferRepo: TransferRepository,
     private readonly paymentService: FlutterwaveService,
     private readonly userRepo: UserRepository,
+    private readonly config: ConfigService,
     private readonly uow: UnitOfWork,
+    @InjectQueue('transactions') private readonly transactionsQueue: Queue,
   ) {}
 
   async createWallet(userId: number) {
@@ -171,6 +178,80 @@ export class WalletService {
     }
 
     await this.walletTransfer(fromWallet, toWallet, amount, description);
+  }
+
+  async walletWithdrawal(
+    userId: number,
+    amount: number,
+    bankCode: string,
+    accountNumber: string,
+  ) {
+    const wallet = await this.findByUserId(userId);
+
+    if (!wallet) {
+      throw new NotFoundException('Wallet not found');
+    }
+
+    const reference = HelperService.generateReference({
+      prefix: TransactionPrefixEnum.WITHDRAWAL,
+      suffix:
+        this.config.get<string>('NODE_ENV') === 'production'
+          ? ''
+          : '_PMCK_ST_FDU_5',
+    });
+
+    await this.paymentService.verifyAccount({
+      accountNumber,
+      bankCode,
+    });
+
+    const response = await this.paymentService.initiateTransfer({
+      accountNumber,
+      bankCode,
+      amount,
+      reference,
+      narration: `Withdrawal from wallet ${wallet.id}`,
+      currency: wallet.currency,
+    });
+
+    try {
+      await this.uow.executeInTransaction(async (trx: Knex.Transaction) => {
+        await this.transactionRepo.insert(
+          {
+            wallet_id: wallet.id,
+            amount: amount,
+            transaction_type: 'WITHDRAWAL',
+            status: 'PENDING',
+            currency: wallet.currency,
+            internal_reference: reference,
+            external_reference: response.externalRef,
+          },
+          trx,
+        );
+
+        await this.withdrawFromWallet(wallet, new Decimal(amount), trx);
+      });
+
+      await this.transactionsQueue.add(
+        TransactionJobsEnum.VerifyWithdrawal,
+        {
+          transferRef: response.externalRef,
+        },
+        {
+          delay: ONE_MINUTE_IN_MS * 1,
+          attempts: 10,
+          backoff: {
+            type: 'exponential',
+            delay: ONE_MINUTE_IN_MS * 2,
+          },
+        },
+      );
+
+      return response;
+    } catch (error) {
+      console.error('Error during wallet withdrawal:', error);
+      HelperService.errorHandler(error, 'Failed to withdraw funds');
+    }
   }
 
   async walletTransfer(

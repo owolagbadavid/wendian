@@ -1,5 +1,6 @@
-import { Controller, Get } from '@nestjs/common';
+import { Body, Controller, Get, Post } from '@nestjs/common';
 import { AppService } from './app.service';
+import { VerifyAccountDto } from './common/dtos/verify-account.dto';
 
 @Controller()
 export class AppController {
@@ -13,5 +14,13 @@ export class AppController {
   @Get('banks')
   getBanks() {
     return this.appService.getBanks();
+  }
+
+  @Post('account-verification')
+  async verifyAccount(@Body() verifyAccountDto: VerifyAccountDto) {
+    return await this.appService.verifyAccount(
+      verifyAccountDto.accountNumber,
+      verifyAccountDto.bankCode,
+    );
   }
 }

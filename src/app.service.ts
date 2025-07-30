@@ -12,4 +12,11 @@ export class AppService {
   getBanks() {
     return this.paymentService.getBanks(DEFAULT_COUNTRY);
   }
+
+  async verifyAccount(accountNumber: string, bankCode: string) {
+    return await this.paymentService.verifyAccount({
+      accountNumber,
+      bankCode,
+    });
+  }
 }

@@ -11,7 +11,12 @@ type TransactionType =
   | 'TRANSFER_OUT'
   | 'TRANSFER_IN'
   | 'REFUND';
-type TransactionStatus = 'PENDING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
+type TransactionStatus =
+  | 'PENDING'
+  | 'COMPLETED'
+  | 'FAILED'
+  | 'CANCELLED'
+  | 'REFUNDED';
 
 declare module 'knex/types/tables' {
   interface User extends BaseEntity {

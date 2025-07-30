@@ -102,11 +102,17 @@ export class BaseRepository<T extends TableEntity> {
   async findOne(
     filter: Partial<Knex.ResolveTableType<T, 'base'>>,
     trx?: Knex.Transaction,
+    forUpdate = false,
   ): Promise<Knex.ResolveTableType<T, 'base'> | null> {
-    const row = await (trx || this.knex)(this.tableName)
+    const query = (trx || this.knex)(this.tableName)
       .where(filter)
-      .whereNull('deleted_at')
-      .first();
+      .whereNull('deleted_at');
+
+    if (forUpdate) {
+      query.forUpdate();
+    }
+
+    const row = await query.first();
 
     return (row ?? null) as Knex.ResolveTableType<T, 'base'> | null;
   }
@@ -114,11 +120,17 @@ export class BaseRepository<T extends TableEntity> {
   async findById(
     id: number,
     trx?: Knex.Transaction,
+    forUpdate = false,
   ): Promise<Knex.ResolveTableType<T, 'base'> | null> {
-    const row = await (trx || this.knex)(this.tableName)
+    const query = (trx || this.knex)(this.tableName)
       .where({ id })
-      .whereNull('deleted_at')
-      .first();
+      .whereNull('deleted_at');
+
+    if (forUpdate) {
+      query.forUpdate();
+    }
+
+    const row = await query.first();
 
     return (row ?? null) as Knex.ResolveTableType<T, 'base'> | null;
   }

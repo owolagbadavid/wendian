@@ -12,6 +12,7 @@ import { ResponseInterceptor } from './common/interceptors/response.interceptor'
 import { HttpModule } from '@nestjs/axios';
 import { WalletModule } from './wallet/wallet.module';
 import { FlutterwaveService } from './common/services/flutterwave.service';
+import { TransactionsModule } from './transactions/transactions.module';
 
 const cacheConfig: CacheModuleAsyncOptions = {
   isGlobal: true,
@@ -64,6 +65,7 @@ const cacheConfig: CacheModuleAsyncOptions = {
       cache: true,
     }),
     WalletModule,
+    TransactionsModule,
   ],
   controllers: [AppController],
   providers: [

@@ -19,7 +19,7 @@ declare module 'flutterwave-node-v3' {
   interface TransferResponse {
     status: string;
     message: string;
-    data: {
+    data?: {
       id: number;
       account_number: string;
       bank_code: string;
@@ -77,7 +77,7 @@ declare module 'flutterwave-node-v3' {
   interface TransactionVerifyResponse {
     status: string;
     message: string;
-    data: {
+    data?: {
       id: number;
       tx_ref: string;
       flw_ref: string;
@@ -144,6 +144,20 @@ declare module 'flutterwave-node-v3' {
     };
   }
 
+  interface VerifyAccountPayload {
+    account_number: string;
+    account_bank: string;
+  }
+
+  interface VerifyAccountResponse {
+    status: string;
+    message: string;
+    data?: {
+      account_number: string;
+      account_name: string;
+    };
+  }
+
   // interface PaymentPayload {
   //   amount: number;
   //   tx_ref: string;
@@ -173,7 +187,7 @@ declare module 'flutterwave-node-v3' {
       initiate: (payload: TransferPayload) => Promise<TransferResponse>;
       get_a_transfer: (
         payload: GetTransferPayload,
-      ) => Promise<TransferFeeResponse>;
+      ) => Promise<TransferResponse>;
     };
 
     Bank: {
@@ -188,6 +202,12 @@ declare module 'flutterwave-node-v3' {
         payload: TransactionVerifyByTxPayload,
       ) => Promise<TransactionVerifyResponse>;
       refund: (payload: RefundPayload) => Promise<RefundResponse>;
+    };
+
+    Misc: {
+      verify_Account: (
+        payload: VerifyAccountPayload,
+      ) => Promise<VerifyAccountResponse>;
     };
   }
 
