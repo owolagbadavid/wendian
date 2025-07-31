@@ -23,7 +23,7 @@ A comprehensive digital wallet service built with NestJS, providing secure finan
 - **Queue Management**: BullMQ with Redis
 - **Authentication**: JWT-based auth system
 - **Validation**: Class-validator and custom decorators
-- **Testing**: Jest with comprehensive unit and integration tests
+- **Testing**: Jest with comprehensive unit tests
 - **Cache**: Redis-based caching with Keyv
 - **Email**: Nodemailer for email notifications
 
@@ -146,7 +146,7 @@ npm install
 3. Set up environment variables:
 
 ```bash
-cp .env.example .env
+cp example.env .env
 ```
 
 Configure the following variables in `.env`:
@@ -178,7 +178,7 @@ KARMA_API_KEY=your_karma_api_key
 
 # JWT
 JWT_SECRET=your_jwt_secret
-JWT_EXPIRES_IN=24h
+JWT_EXPIRES_IN=6000
 
 # Mail Configuration
 MAIL_HOST=smtp.gmail.com
@@ -214,6 +214,95 @@ npm run start:prod
 ## 🔧 API Documentation
 
 The API documentation is available at `/api/v1/docs` when the application is running.
+
+### Consistent API Response Format
+
+All API endpoints return responses in a standardized format for both success and error scenarios:
+
+#### Response Structure
+
+```typescript
+{
+  "isSuccessful": boolean,
+  "data": T | null,
+  "message": string,
+  "code": number
+}
+```
+
+#### Success Response Example
+
+```json
+{
+  "isSuccessful": true,
+  "data": {
+    "id": 1,
+    "email": "user@example.com",
+    "firstName": "John",
+    "lastName": "Doe",
+    "username": "johndoe"
+  },
+  "message": "User profile retrieved successfully",
+  "code": 200
+}
+```
+
+#### Error Response Example
+
+```json
+{
+  "isSuccessful": false,
+  "data": null,
+  "message": "User not found",
+  "code": 404
+}
+```
+
+#### Response Transformation
+
+The application uses global interceptors and exception filters to ensure consistent response formatting:
+
+**Response Interceptor**: Automatically wraps successful responses in the standard format
+```typescript
+@Injectable()
+export class ResponseInterceptor<T> implements NestInterceptor<T, ApiResponseDto<T>> {
+  intercept(context: ExecutionContext, next: CallHandler): Observable<ApiResponseDto<T>> {
+    return next.handle().pipe(
+      map((data) => new ApiResponseDto<T>(
+        true,
+        HelperService.keysToCamel(data) as T,
+        message ?? 'Request successful',
+        statusCode,
+      ))
+    );
+  }
+}
+```
+
+**Global Exception Filter**: Catches all exceptions and formats error responses consistently
+```typescript
+@Catch()
+export class GlobalHttpExceptionFilter implements ExceptionFilter {
+  catch(exception: unknown, host: ArgumentsHost) {
+    const responseBody = new ApiResponseDto<null>(
+      false,
+      undefined,
+      message,
+      status,
+    );
+    
+    res.status(status).json(responseBody);
+  }
+}
+```
+
+#### Key Features
+
+- **Uniform Structure**: All endpoints follow the same response pattern
+- **Automatic Transformation**: Responses are automatically formatted by interceptors
+- **Error Handling**: Consistent error response format across all failure scenarios
+- **camelCase Conversion**: All response keys are automatically converted to camelCase
+- **HTTP Status Codes**: Standard HTTP status codes are preserved in the response
 
 ### Authentication Endpoints
 
@@ -545,7 +634,6 @@ docker-compose up -d
 
 ### Environment-Specific Configurations
 
-- **Development**: Enhanced logging, mock payment gateway options
 - **Production**: Karma verification enabled, optimized for performance
 - **Testing**: In-memory database, mocked external services
 
@@ -597,22 +685,11 @@ src/
 ### Code Standards
 
 - Follow TypeScript best practices
-- Write comprehensive tests for new features
-- Maintain test coverage above 80%
-- Use conventional commit messages
 - Document API endpoints in Swagger
 
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🆘 Support
-
-For support and questions:
-
-- Create an issue in the repository
-- Contact the development team
-- Check the documentation for common solutions
 
 ---
 

@@ -50,11 +50,13 @@ const cacheConfig: CacheModuleAsyncOptions = {
       useFactory: (configService: ConfigService) => {
         return {
           connection: {
+            username: configService.get<string>('REDIS_USER'),
+            password: configService.get<string>('REDIS_PASSWORD'),
             host: configService.get<string>('REDIS_HOST'),
             tls:
               configService.get<string>('REDIS_TLS') === 'true'
                 ? {
-                    rejectUnauthorized: true,
+                    rejectUnauthorized: false,
                   }
                 : undefined,
             port: configService.get<number>('REDIS_PORT'),

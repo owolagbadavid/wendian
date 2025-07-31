@@ -21,7 +21,8 @@ async function bootstrap() {
 
   const configuration = app.get(ConfigService);
 
-  const origins = configuration.get<string[]>('ORIGINS');
+  const originsString = configuration.get<string>('ORIGINS');
+  const origins = originsString ? originsString.split(',') : [];
 
   //! Cors
   app.enableCors({
