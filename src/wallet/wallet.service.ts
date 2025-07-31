@@ -356,6 +356,23 @@ export class WalletService {
 
     try {
       await this.uow.executeInTransaction(async (trx: Knex.Transaction) => {
+        const fromWalletForUpdate = await this.walletRepository.findById(
+          fromWallet.id,
+          trx,
+          true, // forUpdate to lock the row
+        );
+        if (!fromWalletForUpdate) {
+          throw new NotFoundException('From wallet not found');
+        }
+
+        const toWalletForUpdate = await this.walletRepository.findById(
+          toWallet.id,
+          trx,
+          true, // forUpdate to lock the row
+        );
+        if (!toWalletForUpdate) {
+          throw new NotFoundException('To wallet not found');
+        }
         const transferOutTransaction = await this.transactionRepo.insert(
           {
             wallet_id: fromWallet.id,
