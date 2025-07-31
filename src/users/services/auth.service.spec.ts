@@ -226,7 +226,7 @@ describe('AuthService', () => {
 
       await service.forgotPassword(email);
       // eslint-disable-next-line @typescript-eslint/unbound-method
-      expect(userRepository.findOne).toHaveBeenCalledWith(email);
+      expect(userRepository.findOne).toHaveBeenCalledWith({ email });
       // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(HelperService.generateRandomCode).not.toHaveBeenCalled();
 
@@ -255,7 +255,7 @@ describe('AuthService', () => {
 
       await service.forgotPassword(email);
       // eslint-disable-next-line @typescript-eslint/unbound-method
-      expect(userRepository.findOne).toHaveBeenCalledWith(email);
+      expect(userRepository.findOne).toHaveBeenCalledWith({ email });
       // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(HelperService.generateRandomCode).toHaveBeenCalledWith(6);
 
@@ -281,7 +281,7 @@ describe('AuthService', () => {
 
       await service.forgotPassword(email);
       // eslint-disable-next-line @typescript-eslint/unbound-method
-      expect(userRepository.findOne).toHaveBeenCalledWith(email);
+      expect(userRepository.findOne).toHaveBeenCalledWith({ email });
 
       expect(cache.set).not.toHaveBeenCalled();
       // eslint-disable-next-line @typescript-eslint/unbound-method
@@ -299,7 +299,7 @@ describe('AuthService', () => {
 
       await service.resendOtp(email);
       // eslint-disable-next-line @typescript-eslint/unbound-method
-      expect(userRepository.findOne).toHaveBeenCalledWith(email);
+      expect(userRepository.findOne).toHaveBeenCalledWith({ email });
       // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(HelperService.generateRandomCode).not.toHaveBeenCalled();
 
@@ -328,7 +328,7 @@ describe('AuthService', () => {
 
       await service.resendOtp(email);
       // eslint-disable-next-line @typescript-eslint/unbound-method
-      expect(userRepository.findOne).toHaveBeenCalledWith(email);
+      expect(userRepository.findOne).toHaveBeenCalledWith({ email });
       // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(HelperService.generateRandomCode).toHaveBeenCalledWith(6);
 
@@ -354,7 +354,7 @@ describe('AuthService', () => {
 
       await service.resendOtp(email);
       // eslint-disable-next-line @typescript-eslint/unbound-method
-      expect(userRepository.findOne).toHaveBeenCalledWith(email);
+      expect(userRepository.findOne).toHaveBeenCalledWith({ email });
 
       expect(cache.set).not.toHaveBeenCalled();
       // eslint-disable-next-line @typescript-eslint/unbound-method
@@ -382,9 +382,9 @@ describe('AuthService', () => {
 
       await service.resetPassword(resetPasswordDto);
       // eslint-disable-next-line @typescript-eslint/unbound-method
-      expect(userRepository.findOne).toHaveBeenCalledWith(
-        resetPasswordDto.email,
-      );
+      expect(userRepository.findOne).toHaveBeenCalledWith({
+        email: resetPasswordDto.email,
+      });
 
       expect(cache.get).toHaveBeenCalledWith(cacheKey);
       // eslint-disable-next-line @typescript-eslint/unbound-method
@@ -473,9 +473,9 @@ describe('AuthService', () => {
         'User not found',
       );
       // eslint-disable-next-line @typescript-eslint/unbound-method
-      expect(userRepository.findOne).toHaveBeenCalledWith(
-        resetPasswordDto.email,
-      );
+      expect(userRepository.findOne).toHaveBeenCalledWith({
+        email: resetPasswordDto.email,
+      });
     });
   });
 
@@ -501,7 +501,9 @@ describe('AuthService', () => {
         // eslint-disable-next-line @typescript-eslint/unbound-method
         expect(usersService.checkKarma).toHaveBeenCalledWith(registerDto.email);
         // eslint-disable-next-line @typescript-eslint/unbound-method
-        expect(userRepository.findOne).toHaveBeenCalledWith(registerDto.email);
+        expect(userRepository.findOne).toHaveBeenCalledWith({
+          email: registerDto.email,
+        });
         // eslint-disable-next-line @typescript-eslint/unbound-method
         expect(userRepository.insert).toHaveBeenCalledWith({
           email: registerDto.email,
@@ -579,7 +581,9 @@ describe('AuthService', () => {
           'Email is already registered',
         );
         // eslint-disable-next-line @typescript-eslint/unbound-method
-        expect(userRepository.findOne).toHaveBeenCalledWith(registerDto.email);
+        expect(userRepository.findOne).toHaveBeenCalledWith({
+          email: registerDto.email,
+        });
       });
     });
 
@@ -601,7 +605,9 @@ describe('AuthService', () => {
         // eslint-disable-next-line @typescript-eslint/unbound-method
         expect(usersService.checkKarma).not.toHaveBeenCalled();
         // eslint-disable-next-line @typescript-eslint/unbound-method
-        expect(userRepository.findOne).toHaveBeenCalledWith(registerDto.email);
+        expect(userRepository.findOne).toHaveBeenCalledWith({
+          email: registerDto.email,
+        });
         // eslint-disable-next-line @typescript-eslint/unbound-method
         expect(userRepository.insert).toHaveBeenCalledWith({
           email: registerDto.email,

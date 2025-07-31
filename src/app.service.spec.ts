@@ -4,6 +4,7 @@ import { AppService } from './app.service';
 import { PaymentService } from './common/services/payment.service';
 import { BankRepository } from './db/repositories/bank.repository';
 import { DEFAULT_COUNTRY } from './common/constants';
+import { UserRepository } from './db/repositories/user.repository';
 
 describe('AppService', () => {
   let service: AppService;
@@ -20,6 +21,11 @@ describe('AppService', () => {
     insertMany: jest.fn(),
   };
 
+  const mockUserRepo = {
+    findAll: jest.fn(),
+    insertMany: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -31,6 +37,10 @@ describe('AppService', () => {
         {
           provide: BankRepository,
           useValue: mockBankRepo,
+        },
+        {
+          provide: UserRepository,
+          useValue: mockUserRepo,
         },
       ],
     }).compile();

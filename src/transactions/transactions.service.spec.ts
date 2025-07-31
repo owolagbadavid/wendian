@@ -16,6 +16,7 @@ import { HelperService } from 'src/common/services/helper.service';
 import { TransactionPrefixEnum } from 'src/common/enums';
 import { Transaction } from 'src/db/entities';
 import { Knex } from 'knex';
+import { VirtualAccountRepository } from 'src/db/repositories/virtual-account.repository';
 
 describe('TransactionsService', () => {
   let service: TransactionsService;
@@ -39,6 +40,10 @@ describe('TransactionsService', () => {
   };
 
   const mockTransferRepository = {
+    // Not used in provided methods, but mocked for constructor
+  };
+
+  const mockVirtualAccountRepository = {
     // Not used in provided methods, but mocked for constructor
   };
 
@@ -98,6 +103,10 @@ describe('TransactionsService', () => {
         {
           provide: UnitOfWork,
           useValue: mockUnitOfWork,
+        },
+        {
+          provide: VirtualAccountRepository,
+          useValue: mockVirtualAccountRepository,
         },
       ],
     }).compile();
