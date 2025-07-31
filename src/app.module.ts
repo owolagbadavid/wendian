@@ -48,18 +48,25 @@ const cacheConfig: CacheModuleAsyncOptions = {
     }),
     BullModule.forRootAsync({
       useFactory: (configService: ConfigService) => {
+        const redisHost = configService.get<string>('REDIS_HOST');
+        const redisPort = configService.get<number>('REDIS_PORT');
+        const redisUsername = configService.get<string>('REDIS_USERNAME');
+        const redisPassword = configService.get<string>('REDIS_PASSWORD');
+        const redisTLS = configService.get<string>('REDIS_TLS') === 'true';
+
+        const protocol = redisTLS ? 'rediss' : 'redis';
+        let redisUrl = '';
+        if (redisUsername && redisPassword) {
+          // If username and password are provided, use them in the URL
+          redisUrl = `${protocol}://${redisUsername}:${redisPassword}@${redisHost}:${redisPort}`;
+        } else {
+          // If not, just use host and port
+          redisUrl = `${protocol}://${redisHost}:${redisPort}`;
+        }
+
         return {
           connection: {
-            username: configService.get<string>('REDIS_USER'),
-            password: configService.get<string>('REDIS_PASSWORD'),
-            host: configService.get<string>('REDIS_HOST'),
-            tls:
-              configService.get<string>('REDIS_TLS') === 'true'
-                ? {
-                    rejectUnauthorized: false,
-                  }
-                : undefined,
-            port: configService.get<number>('REDIS_PORT'),
+            url: redisUrl,
           },
         };
       },
