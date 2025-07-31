@@ -168,5 +168,8 @@ declare module 'knex/types/tables' {
       Partial<Omit<Bank, 'id'>> &
         Partial<{ bank_code: string; bank_name: string }>
     >;
+
+    // test
+    mock_table: Knex.CompositeTableType<any, any, Partial<any>>;
   }
 }

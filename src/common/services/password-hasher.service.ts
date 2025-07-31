@@ -20,7 +20,23 @@ export class PasswordHasher {
   }
 
   static verifyPassword(password: string, hashedPassword: string): boolean {
-    const hashBytes = Buffer.from(hashedPassword, 'base64');
+    // Validate base64 string
+    if (!/^[A-Za-z0-9+/=]+$/.test(hashedPassword)) {
+      return false; // Invalid base64 characters
+    }
+
+    let hashBytes: Buffer;
+    try {
+      hashBytes = Buffer.from(hashedPassword, 'base64');
+    } catch {
+      return false; // Invalid base64 encoding
+    }
+
+    // Validate buffer length
+    if (hashBytes.length !== this.SALT_SIZE + this.KEY_SIZE) {
+      return false; // Incorrect length
+    }
+
     const salt = hashBytes.subarray(0, this.SALT_SIZE);
     const storedHash = hashBytes.subarray(this.SALT_SIZE);
 

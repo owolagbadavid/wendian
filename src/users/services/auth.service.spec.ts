@@ -35,7 +35,6 @@ describe('AuthService', () => {
 
   const mockUserRepository = {
     findOne: jest.fn(),
-    findByEmail: jest.fn(),
     insert: jest.fn(),
     update: jest.fn(),
   };
@@ -222,12 +221,12 @@ describe('AuthService', () => {
       const email = 'test@example.com';
       const mockUser = { id: 1, email };
       mockConfigService.get.mockReturnValue('development');
-      mockUserRepository.findByEmail.mockResolvedValue(mockUser);
+      mockUserRepository.findOne.mockResolvedValue(mockUser);
       const cacheKey = CACHE_KEYS.RESET_PASSWORD_OTP(email);
 
       await service.forgotPassword(email);
       // eslint-disable-next-line @typescript-eslint/unbound-method
-      expect(userRepository.findByEmail).toHaveBeenCalledWith(email);
+      expect(userRepository.findOne).toHaveBeenCalledWith(email);
       // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(HelperService.generateRandomCode).not.toHaveBeenCalled();
 
@@ -251,12 +250,12 @@ describe('AuthService', () => {
       const email = 'test@example.com';
       const mockUser = { id: 1, email };
       mockConfigService.get.mockReturnValue('production');
-      mockUserRepository.findByEmail.mockResolvedValue(mockUser);
+      mockUserRepository.findOne.mockResolvedValue(mockUser);
       const cacheKey = CACHE_KEYS.RESET_PASSWORD_OTP(email);
 
       await service.forgotPassword(email);
       // eslint-disable-next-line @typescript-eslint/unbound-method
-      expect(userRepository.findByEmail).toHaveBeenCalledWith(email);
+      expect(userRepository.findOne).toHaveBeenCalledWith(email);
       // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(HelperService.generateRandomCode).toHaveBeenCalledWith(6);
 
@@ -278,11 +277,11 @@ describe('AuthService', () => {
 
     it('should return silently for non-existent user', async () => {
       const email = 'nonexistent@example.com';
-      mockUserRepository.findByEmail.mockResolvedValue(null);
+      mockUserRepository.findOne.mockResolvedValue(null);
 
       await service.forgotPassword(email);
       // eslint-disable-next-line @typescript-eslint/unbound-method
-      expect(userRepository.findByEmail).toHaveBeenCalledWith(email);
+      expect(userRepository.findOne).toHaveBeenCalledWith(email);
 
       expect(cache.set).not.toHaveBeenCalled();
       // eslint-disable-next-line @typescript-eslint/unbound-method
@@ -295,12 +294,12 @@ describe('AuthService', () => {
       const email = 'test@example.com';
       const mockUser = { id: 1, email };
       mockConfigService.get.mockReturnValue('development');
-      mockUserRepository.findByEmail.mockResolvedValue(mockUser);
+      mockUserRepository.findOne.mockResolvedValue(mockUser);
       const cacheKey = CACHE_KEYS.RESET_PASSWORD_OTP(email);
 
       await service.resendOtp(email);
       // eslint-disable-next-line @typescript-eslint/unbound-method
-      expect(userRepository.findByEmail).toHaveBeenCalledWith(email);
+      expect(userRepository.findOne).toHaveBeenCalledWith(email);
       // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(HelperService.generateRandomCode).not.toHaveBeenCalled();
 
@@ -324,12 +323,12 @@ describe('AuthService', () => {
       const email = 'test@example.com';
       const mockUser = { id: 1, email };
       mockConfigService.get.mockReturnValue('production');
-      mockUserRepository.findByEmail.mockResolvedValue(mockUser);
+      mockUserRepository.findOne.mockResolvedValue(mockUser);
       const cacheKey = CACHE_KEYS.RESET_PASSWORD_OTP(email);
 
       await service.resendOtp(email);
       // eslint-disable-next-line @typescript-eslint/unbound-method
-      expect(userRepository.findByEmail).toHaveBeenCalledWith(email);
+      expect(userRepository.findOne).toHaveBeenCalledWith(email);
       // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(HelperService.generateRandomCode).toHaveBeenCalledWith(6);
 
@@ -351,11 +350,11 @@ describe('AuthService', () => {
 
     it('should return silently for non-existent user', async () => {
       const email = 'nonexistent@example.com';
-      mockUserRepository.findByEmail.mockResolvedValue(null);
+      mockUserRepository.findOne.mockResolvedValue(null);
 
       await service.resendOtp(email);
       // eslint-disable-next-line @typescript-eslint/unbound-method
-      expect(userRepository.findByEmail).toHaveBeenCalledWith(email);
+      expect(userRepository.findOne).toHaveBeenCalledWith(email);
 
       expect(cache.set).not.toHaveBeenCalled();
       // eslint-disable-next-line @typescript-eslint/unbound-method
@@ -378,12 +377,12 @@ describe('AuthService', () => {
         status: StatusEnum.PENDING,
       };
       const cacheKey = CACHE_KEYS.RESET_PASSWORD_OTP(resetPasswordDto.email);
-      mockUserRepository.findByEmail.mockResolvedValue(mockUser);
+      mockUserRepository.findOne.mockResolvedValue(mockUser);
       mockCache.get.mockResolvedValue(resetPasswordDto.otp);
 
       await service.resetPassword(resetPasswordDto);
       // eslint-disable-next-line @typescript-eslint/unbound-method
-      expect(userRepository.findByEmail).toHaveBeenCalledWith(
+      expect(userRepository.findOne).toHaveBeenCalledWith(
         resetPasswordDto.email,
       );
 
@@ -465,7 +464,7 @@ describe('AuthService', () => {
       };
       const cacheKey = CACHE_KEYS.RESET_PASSWORD_OTP(resetPasswordDto.email);
       mockCache.get.mockResolvedValue(resetPasswordDto.otp);
-      mockUserRepository.findByEmail.mockResolvedValue(null);
+      mockUserRepository.findOne.mockResolvedValue(null);
 
       await expect(service.resetPassword(resetPasswordDto)).rejects.toThrow(
         BadRequestException,
@@ -474,7 +473,7 @@ describe('AuthService', () => {
         'User not found',
       );
       // eslint-disable-next-line @typescript-eslint/unbound-method
-      expect(userRepository.findByEmail).toHaveBeenCalledWith(
+      expect(userRepository.findOne).toHaveBeenCalledWith(
         resetPasswordDto.email,
       );
     });
@@ -495,16 +494,14 @@ describe('AuthService', () => {
         mockUsersService.checkKarma.mockRejectedValue(
           new NotFoundException('Karma not found'),
         );
-        mockUserRepository.findByEmail.mockResolvedValue(null);
+        mockUserRepository.findOne.mockResolvedValue(null);
         jest.spyOn(service, 'resendOtp').mockResolvedValue(undefined);
 
         await service.registerUser(registerDto);
         // eslint-disable-next-line @typescript-eslint/unbound-method
         expect(usersService.checkKarma).toHaveBeenCalledWith(registerDto.email);
         // eslint-disable-next-line @typescript-eslint/unbound-method
-        expect(userRepository.findByEmail).toHaveBeenCalledWith(
-          registerDto.email,
-        );
+        expect(userRepository.findOne).toHaveBeenCalledWith(registerDto.email);
         // eslint-disable-next-line @typescript-eslint/unbound-method
         expect(userRepository.insert).toHaveBeenCalledWith({
           email: registerDto.email,
@@ -573,7 +570,7 @@ describe('AuthService', () => {
         mockUsersService.checkKarma.mockRejectedValue(
           new NotFoundException('Karma not found'),
         );
-        mockUserRepository.findByEmail.mockResolvedValue(mockUser);
+        mockUserRepository.findOne.mockResolvedValue(mockUser);
 
         await expect(service.registerUser(registerDto)).rejects.toThrow(
           BadRequestException,
@@ -582,9 +579,7 @@ describe('AuthService', () => {
           'Email is already registered',
         );
         // eslint-disable-next-line @typescript-eslint/unbound-method
-        expect(userRepository.findByEmail).toHaveBeenCalledWith(
-          registerDto.email,
-        );
+        expect(userRepository.findOne).toHaveBeenCalledWith(registerDto.email);
       });
     });
 
@@ -599,16 +594,14 @@ describe('AuthService', () => {
           firstName: 'John',
           lastName: 'Doe',
         };
-        mockUserRepository.findByEmail.mockResolvedValue(null);
+        mockUserRepository.findOne.mockResolvedValue(null);
         jest.spyOn(service, 'resendOtp').mockResolvedValue(undefined);
 
         await service.registerUser(registerDto);
         // eslint-disable-next-line @typescript-eslint/unbound-method
         expect(usersService.checkKarma).not.toHaveBeenCalled();
         // eslint-disable-next-line @typescript-eslint/unbound-method
-        expect(userRepository.findByEmail).toHaveBeenCalledWith(
-          registerDto.email,
-        );
+        expect(userRepository.findOne).toHaveBeenCalledWith(registerDto.email);
         // eslint-disable-next-line @typescript-eslint/unbound-method
         expect(userRepository.insert).toHaveBeenCalledWith({
           email: registerDto.email,

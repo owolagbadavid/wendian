@@ -71,7 +71,7 @@ export class AuthService {
   }
 
   async forgotPassword(email: string) {
-    const user = await this.userRepository.findByEmail(email);
+    const user = await this.userRepository.findOne({ email });
     if (!user) {
       // Don't reveal if email exists for security
       return;
@@ -99,7 +99,7 @@ export class AuthService {
   }
 
   async resendOtp(email: string) {
-    const user = await this.userRepository.findByEmail(email);
+    const user = await this.userRepository.findOne({ email });
     if (!user) {
       // Don't reveal if email exists for security
       return;
@@ -149,7 +149,7 @@ export class AuthService {
       throw new BadRequestException('Invalid or expired OTP');
     }
 
-    const user = await this.userRepository.findByEmail(email);
+    const user = await this.userRepository.findOne({ email });
     if (!user) {
       throw new BadRequestException('User not found');
     }
@@ -190,7 +190,8 @@ export class AuthService {
         }
       }
 
-      const existingUser = await this.userRepository.findByEmail(email);
+      const existingUser = await this.userRepository.findOne({ email });
+
       if (existingUser) {
         throw new BadRequestException('Email is already registered');
       }
