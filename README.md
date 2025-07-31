@@ -1,98 +1,557 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Wendian Wallet Service
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+A comprehensive digital wallet service built with NestJS, providing secure financial transactions, user management, and blacklist verification through Lendsqr Adjutor Karma integration.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## 🚀 Features
 
-## Description
+- **User Management**: Secure user registration and authentication with email verification
+- **Digital Wallet**: Create and manage digital wallets with NGN currency support
+- **Fund Management**: Deposit funds via Flutterwave payment gateway integration
+- **P2P Transfers**: Transfer funds between users using usernames
+- **Withdrawals**: Withdraw funds to Nigerian bank accounts
+- **Blacklist Protection**: Integration with Lendsqr Adjutor Karma for user verification
+- **Transaction History**: Complete audit trail of all financial operations
+- **Virtual Accounts**: Automated virtual account creation for seamless deposits
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## 🏗️ Architecture
 
-## Project setup
+### Technology Stack
 
-```bash
-$ npm install
+- **Backend**: NestJS (Node.js) with TypeScript
+- **Database**: MySQL with Knex.js migrations
+- **Payment Gateway**: Flutterwave integration
+- **Queue Management**: BullMQ with Redis
+- **Authentication**: JWT-based auth system
+- **Validation**: Class-validator and custom decorators
+- **Testing**: Jest with comprehensive unit and integration tests
+- **Cache**: Redis-based caching with Keyv
+- **Email**: Nodemailer for email notifications
+
+### Database Schema (ERD)
+
+```mermaid
+erDiagram
+    users {
+        int id PK
+        varchar email UK
+        text password_hash
+        boolean is_email_verified
+        timestamp email_verified_at
+        varchar status
+        varchar role
+        varchar username UK
+        varchar first_name
+        varchar last_name
+        timestamp created_at
+        timestamp updated_at
+        timestamp deleted_at
+    }
+
+    wallets {
+        int id PK
+        int user_id FK
+        decimal balance
+        varchar currency
+        boolean is_active
+        timestamp created_at
+        timestamp updated_at
+        timestamp deleted_at
+    }
+
+    transactions {
+        int id PK
+        int wallet_id FK
+        varchar transaction_type
+        decimal amount
+        varchar currency
+        varchar status
+        varchar external_reference
+        varchar internal_reference
+        timestamp created_at
+        timestamp updated_at
+        timestamp deleted_at
+    }
+
+    transfers {
+        int id PK
+        int from_wallet_id FK
+        int to_wallet_id FK
+        decimal amount
+        varchar currency
+        text description
+        int from_transaction_id FK
+        int to_transaction_id FK
+        timestamp created_at
+        timestamp updated_at
+        timestamp deleted_at
+    }
+
+    virtual_accounts {
+        int id PK
+        int wallet_id FK
+        varchar bank_code
+        varchar bank_name
+        varchar account_number
+        varchar bvn
+        varchar phone_number
+        varchar reference
+        timestamp expiry_date
+        timestamp created_at
+        timestamp updated_at
+        timestamp deleted_at
+    }
+
+    banks {
+        int id PK
+        varchar bank_code UK
+        varchar bank_name
+        timestamp created_at
+        timestamp updated_at
+        timestamp deleted_at
+    }
+
+    users ||--|| wallets : has
+    wallets ||--o{ transactions : contains
+    wallets ||--o{ transfers : from_wallet
+    wallets ||--o{ transfers : to_wallet
+    transactions ||--o{ transfers : from_transaction
+    transactions ||--o{ transfers : to_transaction
+    wallets ||--o{ virtual_accounts : has
 ```
 
-## Compile and run the project
+## 📦 Installation
+
+### Prerequisites
+
+- Node.js (v20+)
+- MySQL (v8+)
+- Redis (v6+)
+- npm or yarn
+
+### Environment Setup
+
+1. Clone the repository:
 
 ```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+git clone <repository-url>
+cd wendian
 ```
 
-## Run tests
+2. Install dependencies:
 
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+npm install
 ```
 
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+3. Set up environment variables:
 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+cp .env.example .env
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+Configure the following variables in `.env`:
 
-## Resources
+```env
+# Database
+DB_HOST=localhost
+DB_USER=root
+DB_PASSWORD=your_password
+DATABASE=wendian_db
+DB_PORT=3306
+DB_SSL=false
 
-Check out a few resources that may come in handy when working with NestJS:
+# Redis
+REDIS_HOST=localhost
+REDIS_PORT=6379
+REDIS_PASSWORD=
+REDIS_TLS=false
+REDIS_USERNAME=
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+# Flutterwave
+FLW_PUBLIC_KEY=your_flutterwave_public_key
+FLW_SECRET_KEY=your_flutterwave_secret_key
+FLW_BASE_URL=https://api.flutterwave.com/v3
 
-## Support
+# Karma Service
+KARMA_BASE_URL=https://api.lendsqr.com
+KARMA_API_KEY=your_karma_api_key
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+# JWT
+JWT_SECRET=your_jwt_secret
+JWT_EXPIRES_IN=24h
 
-## Stay in touch
+# Mail Configuration
+MAIL_HOST=smtp.gmail.com
+MAIL_PORT=587
+MAIL_USER=your_email
+MAIL_PASS=your_password
+MAIL_FROM=noreply@wendian.com
+SEND_EMAIL=true
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+# App
+NODE_ENV=development
+PORT=3000
+ORIGINS=http://localhost:3000,http://localhost:3001
+```
 
-## License
+4. Run database migrations:
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+```bash
+npm run migrate:latest
+```
+
+5. Start the application:
+
+```bash
+# Development
+npm run start:dev
+
+# Production
+npm run build
+npm run start:prod
+```
+
+## 🔧 API Documentation
+
+The API documentation is available at `/api/v1/docs` when the application is running.
+
+### Authentication Endpoints
+
+#### Register User
+
+```http
+POST /api/v1/auth/register
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "firstName": "John",
+  "lastName": "Doe"
+}
+```
+
+#### Login User
+
+```http
+POST /api/v1/auth/login
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "password": "userPassword"
+}
+```
+
+#### Verify Email
+
+```http
+POST /api/v1/auth/verify-email
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "otp": "123456"
+}
+```
+
+#### Reset Password
+
+```http
+POST /api/v1/auth/reset-password
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "otp": "123456",
+  "password": "newPassword"
+}
+```
+
+### Wallet Endpoints
+
+#### Create Wallet
+
+```http
+POST /api/v1/users/wallets
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "bvn": "12345678901",
+  "phoneNumber": "08012345678"
+}
+```
+
+#### Fund Wallet
+
+```http
+POST /api/v1/wallet/fund
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "amount": "1000.00"
+}
+```
+
+#### Transfer Funds
+
+```http
+POST /api/v1/wallet/transfer
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "toUsername": "recipient_username",
+  "amount": "500.00",
+  "description": "Payment for services"
+}
+```
+
+#### Withdraw Funds
+
+```http
+POST /api/v1/wallet/withdraw
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "amount": "200.00",
+  "bankCode": "058",
+  "accountNumber": "1234567890"
+}
+```
+
+#### Verify Payment
+
+```http
+PATCH /api/v1/wallet/fund
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "reference": "DEPOSIT_123456789"
+}
+```
+
+### User Endpoints
+
+#### Get Profile
+
+```http
+GET /api/v1/users/me
+Authorization: Bearer <token>
+```
+
+#### Get Wallet
+
+```http
+GET /api/v1/users/wallets
+Authorization: Bearer <token>
+```
+
+#### Search Users
+
+```http
+POST /api/v1/users/search
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "page": 1,
+  "size": 10
+}
+```
+
+#### Update Username
+
+```http
+PATCH /api/v1/users/username
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "username": "new_username"
+}
+```
+
+### Utility Endpoints
+
+#### Get Banks
+
+```http
+GET /api/v1/banks
+```
+
+#### Verify Bank Account
+
+```http
+POST /api/v1/account-verification
+Content-Type: application/json
+
+{
+  "accountNumber": "1234567890",
+  "bankCode": "058"
+}
+```
+
+#### Get Dashboard Summary
+
+```http
+GET /api/v1/summary?fromDate=2023-01-01&toDate=2023-12-31
+```
+
+## 🧪 Testing
+
+Run the test suite:
+
+```bash
+# Unit tests
+npm run test
+
+# Watch mode
+npm run test:watch
+```
+
+## 🏢 Business Logic
+
+### User Onboarding
+
+1. **Registration**: Users register with email and basic information
+2. **Email Verification**: Email verification process for account activation
+3. **Karma Check**: Integration with Lendsqr Adjutor Karma to prevent blacklisted users from onboarding (production only)
+4. **Wallet Creation**: Users can create a wallet with BVN and phone number verification
+
+### Wallet Operations
+
+#### Fund Wallet
+
+- Users initiate funding through Flutterwave payment gateway
+- Payment verification ensures transaction integrity
+- Successful payments update wallet balance automatically
+
+#### Transfer Funds
+
+- P2P transfers between users using unique usernames
+- Real-time balance validation prevents overdrafts
+- Complete transaction audit trail maintained
+
+#### Withdraw Funds
+
+- Bank account verification before withdrawal processing
+- Integration with Flutterwave for bank transfers
+- Automatic reversal handling for failed transactions
+
+### Transaction States
+
+- **PENDING**: Initial transaction state
+- **COMPLETED**: Successfully processed transaction
+- **FAILED**: Transaction processing failed
+- **CANCELLED**: User-initiated cancellation
+- **REFUNDED**: Reversed transaction
+
+## 🔒 Security Features
+
+- **JWT Authentication**: Secure token-based authentication
+- **Input Validation**: Comprehensive request validation using class-validator
+- **SQL Injection Protection**: Parameterized queries with Knex.js
+- **Rate Limiting**: API rate limiting for abuse prevention with Throttler
+- **Blacklist Integration**: Real-time verification against Lendsqr Adjutor Karma
+- **Transaction Locking**: Database row locking for concurrent transaction safety
+- **Password Hashing**: Secure password hashing with PBKDF2
+
+## 📊 Monitoring & Observability
+
+- **Structured Logging**: Comprehensive application logging
+- **Error Handling**: Centralized error handling with detailed error messages
+- **Transaction Audit**: Complete transaction history and audit trails
+- **Queue Monitoring**: BullMQ job queue monitoring
+
+## 🚀 Deployment
+
+### Docker Deployment
+
+```bash
+# Build image
+docker build -t wendian-wallet .
+
+# Run with docker-compose
+docker-compose up -d
+```
+
+### Environment-Specific Configurations
+
+- **Development**: Enhanced logging, mock payment gateway options
+- **Production**: Karma verification enabled, optimized for performance
+- **Testing**: In-memory database, mocked external services
+
+### Database Migrations
+
+```bash
+# Run migrations
+npx knex migrate:latest
+
+# Rollback migrations
+npx knex migrate:rollback
+
+# Create new migration
+npx knex migrate:make migration_name
+```
+
+## 📁 Project Structure
+
+```
+src/
+├── app.module.ts              # Main application module
+├── main.ts                    # Application entry point
+├── auth/                      # Authentication module
+├── common/                    # Shared utilities and services
+│   ├── decorators/           # Custom decorators
+│   ├── enums/               # Application enums
+│   ├── services/            # Shared services
+│   └── types/               # Type definitions
+├── db/                       # Database layer
+│   ├── entities/            # Database entities
+│   ├── repositories/        # Data access layer
+│   └── types/               # Database type definitions
+├── mail/                     # Email service
+├── transactions/             # Transaction handling
+├── users/                    # User management
+└── wallet/                   # Wallet operations
+```
+
+## 🛠️ Development Tools
+
+- **ESLint**: Code linting with TypeScript support
+- **Prettier**: Code formatting
+- **Jest**: Testing framework
+- **Swagger**: API documentation
+- **Knex**: Database query builder and migrations
+- **Class Transformer**: Object transformation
+- **Class Validator**: Request validation
+
+
+### Code Standards
+
+- Follow TypeScript best practices
+- Write comprehensive tests for new features
+- Maintain test coverage above 80%
+- Use conventional commit messages
+- Document API endpoints in Swagger
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🆘 Support
+
+For support and questions:
+
+- Create an issue in the repository
+- Contact the development team
+- Check the documentation for common solutions
+
+
+---
+
+Built with ❤️ using NestJS and TypeScript

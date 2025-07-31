@@ -7,7 +7,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { BullModule } from '@nestjs/bullmq';
 import { CacheModule, CacheModuleAsyncOptions } from '@nestjs/cache-manager';
 import KeyvRedis from '@keyv/redis';
-import { APP_INTERCEPTOR } from '@nestjs/core';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 import { HttpModule } from '@nestjs/axios';
 import { WalletModule } from './wallet/wallet.module';
@@ -15,6 +15,7 @@ import { FlutterwaveService } from './common/services/flutterwave.service';
 import { TransactionsModule } from './transactions/transactions.module';
 import { KarmaService } from './common/services/karma.service';
 import { PaymentService } from './common/services/payment.service';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 
 const cacheConfig: CacheModuleAsyncOptions = {
   isGlobal: true,
@@ -68,6 +69,14 @@ const cacheConfig: CacheModuleAsyncOptions = {
     }),
     WalletModule,
     TransactionsModule,
+    ThrottlerModule.forRoot({
+      throttlers: [
+        {
+          ttl: 60000,
+          limit: 10,
+        },
+      ],
+    }),
   ],
   controllers: [AppController],
   providers: [
@@ -80,6 +89,11 @@ const cacheConfig: CacheModuleAsyncOptions = {
     {
       provide: APP_INTERCEPTOR,
       useClass: ResponseInterceptor,
+    },
+
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
     },
   ],
 })

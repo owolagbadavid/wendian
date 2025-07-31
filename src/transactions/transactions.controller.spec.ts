@@ -32,7 +32,7 @@ describe('TransactionsController', () => {
       providers: [
         {
           provide: TransactionsService,
-          useValue: mockTransactionsService as unknown, // Cast to unknown to bypass type mismatch
+          useValue: mockTransactionsService,
         },
         {
           provide: ConfigService,
