@@ -23,7 +23,7 @@ const cacheConfig: CacheModuleAsyncOptions = {
   useFactory: (configService: ConfigService) => {
     const redisHost = configService.get<string>('REDIS_HOST');
     const redisPort = configService.get<number>('REDIS_PORT');
-    const redisUsername = configService.get<string>('REDIS_USERNAME');
+    const redisUsername = configService.get<string>('REDIS_USER');
     const redisPassword = configService.get<string>('REDIS_PASSWORD');
     const redisTLS = configService.get<string>('REDIS_TLS') === 'true';
 
@@ -50,7 +50,7 @@ const cacheConfig: CacheModuleAsyncOptions = {
       useFactory: (configService: ConfigService) => {
         const redisHost = configService.get<string>('REDIS_HOST');
         const redisPort = configService.get<number>('REDIS_PORT');
-        const redisUsername = configService.get<string>('REDIS_USERNAME');
+        const redisUsername = configService.get<string>('REDIS_USER');
         const redisPassword = configService.get<string>('REDIS_PASSWORD');
         const redisTLS = configService.get<string>('REDIS_TLS') === 'true';
 
