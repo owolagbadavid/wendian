@@ -63,10 +63,19 @@ const cacheConfig: CacheModuleAsyncOptions = {
           // If not, just use host and port
           redisUrl = `${protocol}://${redisHost}:${redisPort}`;
         }
-
         return {
           connection: {
-            url: redisUrl,
+            redisOptions: {
+              url: redisUrl,
+              ...(redisTLS
+                ? {
+                    tls: {
+                      minVersion: 'TLSv1.2',
+                      rejectUnauthorized: true,
+                    },
+                  }
+                : {}),
+            },
           },
         };
       },
