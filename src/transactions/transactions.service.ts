@@ -1,13 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { plainToInstance } from 'class-transformer';
 import { Knex } from 'knex';
+import { SearchRequestDto } from 'src/common/dtos';
 import { TransactionPrefixEnum } from 'src/common/enums';
 import { HelperService } from 'src/common/services/helper.service';
 import { PaymentService } from 'src/common/services/payment.service';
-import { Transaction } from 'src/db/entities';
+import { Transaction, Transfer } from 'src/db/entities';
 import { TransactionRepository } from 'src/db/repositories/transaction.repository';
 import { TransferRepository } from 'src/db/repositories/transfer.repository';
 import { UserRepository } from 'src/db/repositories/user.repository';
+import { VirtualAccountRepository } from 'src/db/repositories/virtual-account.repository';
 import { WalletRepository } from 'src/db/repositories/wallet.repository';
 import { UnitOfWork } from 'src/db/uow/uow';
 import { WalletService } from 'src/wallet/wallet.service';
@@ -18,6 +21,7 @@ export class TransactionsService {
     private readonly transactionRepository: TransactionRepository,
     private readonly walletRepository: WalletRepository,
     private readonly transferRepository: TransferRepository,
+    private readonly virtualAccountRepository: VirtualAccountRepository,
     private readonly userRepository: UserRepository,
     private readonly paymentService: PaymentService,
     private readonly config: ConfigService,
@@ -151,6 +155,36 @@ export class TransactionsService {
         }
       }
       return;
+    }
+  }
+
+  async searchTransactions(req: SearchRequestDto) {
+    try {
+      const result = await this.transactionRepository.findPaged(req);
+      return result;
+    } catch (error) {
+      console.error(error);
+      HelperService.errorHandler(error, 'Failed to search transactions');
+    }
+  }
+
+  async searchTransfers(req: SearchRequestDto) {
+    try {
+      const result = await this.transferRepository.findPaged(req);
+      return result;
+    } catch (error) {
+      console.error(error);
+      HelperService.errorHandler(error, 'Failed to search transfers');
+    }
+  }
+
+  async searchVirtualAccounts(req: SearchRequestDto) {
+    try {
+      const result = await this.virtualAccountRepository.findPaged(req);
+      return result;
+    } catch (error) {
+      console.error(error);
+      HelperService.errorHandler(error, 'Failed to search virtual accounts');
     }
   }
 }

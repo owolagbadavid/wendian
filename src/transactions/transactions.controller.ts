@@ -8,6 +8,7 @@ import {
 import { TransactionsService } from './transactions.service';
 import { ConfigService } from '@nestjs/config';
 import { createHmac } from 'node:crypto';
+import { SearchRequestDto } from 'src/common/dtos';
 
 @Controller('transactions')
 export class TransactionsController {
@@ -42,5 +43,20 @@ export class TransactionsController {
       .digest('base64');
 
     return hash === signature;
+  }
+
+  @Post('search')
+  searchTransactions(@Body() req: SearchRequestDto) {
+    return this.transactionsService.searchTransactions(req);
+  }
+
+  @Post('/transfers/search')
+  searchTransfers(@Body() req: SearchRequestDto) {
+    return this.transactionsService.searchTransfers(req);
+  }
+
+  @Post('/virtual-accounts/search')
+  searchVirtualAccounts(@Body() req: SearchRequestDto) {
+    return this.transactionsService.searchVirtualAccounts(req);
   }
 }

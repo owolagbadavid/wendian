@@ -3,12 +3,15 @@ import { Injectable } from '@nestjs/common';
 import { DEFAULT_COUNTRY } from './common/constants';
 import { PaymentService } from './common/services/payment.service';
 import { BankRepository } from './db/repositories/bank.repository';
+import { DashboardRequestDto } from './common/dtos/dashboard-request.dto';
+import { UserRepository } from './db/repositories/user.repository';
 
 @Injectable()
 export class AppService {
   constructor(
     private readonly paymentService: PaymentService,
     private readonly bankRepo: BankRepository,
+    private readonly userRepo: UserRepository,
   ) {}
   getHello(): string {
     return 'Hello World!';
@@ -44,5 +47,11 @@ export class AppService {
       accountNumber,
       bankCode,
     });
+  }
+
+  async getDashboardStats(req: DashboardRequestDto) {
+    const { fromDate, toDate } = req;
+
+    return await this.userRepo.getSummary({ fromDate, toDate });
   }
 }

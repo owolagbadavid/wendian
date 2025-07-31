@@ -1,6 +1,7 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query } from '@nestjs/common';
 import { AppService } from './app.service';
 import { VerifyAccountDto } from './common/dtos/verify-account.dto';
+import { DashboardRequestDto } from './common/dtos/dashboard-request.dto';
 
 @Controller()
 export class AppController {
@@ -22,5 +23,10 @@ export class AppController {
       verifyAccountDto.accountNumber,
       verifyAccountDto.bankCode,
     );
+  }
+
+  @Get('summary')
+  async getSummary(@Query() dashboardRequestDto: DashboardRequestDto) {
+    return await this.appService.getDashboardStats(dashboardRequestDto);
   }
 }

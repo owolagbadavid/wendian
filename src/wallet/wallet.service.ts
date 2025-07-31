@@ -5,7 +5,6 @@ import {
 } from '@nestjs/common';
 import Decimal from 'decimal.js';
 import { Knex } from 'knex';
-import { Wallet } from 'knex/types/tables';
 import { DEFAULT_CURRENCY, ONE_MINUTE_IN_MS } from 'src/common/constants';
 import { TransactionPrefixEnum } from 'src/common/enums';
 import { HelperService } from 'src/common/services/helper.service';
@@ -22,6 +21,9 @@ import { TransactionJobsEnum } from 'src/transactions/transaction-jobs.enum';
 import { PaymentService } from 'src/common/services/payment.service';
 import { VirtualAccountRepository } from 'src/db/repositories/virtual-account.repository';
 import { BankRepository } from 'src/db/repositories/bank.repository';
+import { Wallet } from 'src/db/entities';
+import { plainToInstance } from 'class-transformer';
+import { SearchRequestDto } from 'src/common/dtos';
 
 @Injectable()
 export class WalletService {
@@ -373,6 +375,7 @@ export class WalletService {
         if (!toWalletForUpdate) {
           throw new NotFoundException('To wallet not found');
         }
+
         const transferOutTransaction = await this.transactionRepo.insert(
           {
             wallet_id: fromWallet.id,
@@ -463,5 +466,15 @@ export class WalletService {
       },
       trx,
     );
+  }
+
+  async searchWallets(req: SearchRequestDto) {
+    try {
+      const result = await this.walletRepository.findPaged(req);
+      return result;
+    } catch (error) {
+      console.error(error);
+      HelperService.errorHandler(error, 'Failed to search wallets');
+    }
   }
 }

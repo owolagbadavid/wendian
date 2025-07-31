@@ -9,6 +9,7 @@ import {
   WalletWithdrawalDto,
 } from './dtos/wallet.dto';
 import { AuthGuard } from 'src/auth/guards';
+import { SearchRequestDto } from 'src/common/dtos';
 
 @ApiBearerAuth()
 @UseGuards(AuthGuard)
@@ -59,5 +60,10 @@ export class WalletController {
       body.bankCode,
       body.accountNumber,
     );
+  }
+
+  @Post('/search')
+  searchWallets(@Body() req: SearchRequestDto) {
+    return this.walletService.searchWallets(req);
   }
 }
