@@ -27,8 +27,6 @@ export class TransactionsController {
       throw new UnauthorizedException('Invalid signature');
     }
 
-    console.log('Received Flutterwave webhook:', body);
-
     await this.transactionsService.webhookHandler(body);
 
     return;
