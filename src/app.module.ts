@@ -65,12 +65,15 @@ const cacheConfig: CacheModuleAsyncOptions = {
         }
         return {
           connection: {
+            host: redisHost,
+            port: redisPort,
+            username: redisUsername,
+            password: redisPassword,
             redisOptions: {
-              url: redisUrl,
               ...(redisTLS
                 ? {
                     tls: {
-                      minVersion: 'TLSv1.2',
+                      minVersion: 'TLSv1.3',
                       rejectUnauthorized: true,
                     },
                   }
