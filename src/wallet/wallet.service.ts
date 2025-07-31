@@ -148,6 +148,21 @@ export class WalletService {
         external_reference: null,
       });
 
+      await this.transactionsQueue.add(
+        TransactionJobsEnum.VerifyDeposit,
+        {
+          reference,
+        },
+        {
+          delay: ONE_MINUTE_IN_MS * 1,
+          attempts: 10,
+          backoff: {
+            type: 'exponential',
+            delay: ONE_MINUTE_IN_MS * 2,
+          },
+        },
+      );
+
       return response;
     } catch (error) {
       console.error('Error initiating payment:', error);

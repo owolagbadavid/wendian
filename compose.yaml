@@ -1,0 +1,13 @@
+services:
+  app:
+    restart: unless-stopped
+    build: 
+      dockerfile: ./Dockerfile.staging
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./src:/app/src
+    environment:
+      - PORT=3000
+    env_file:
+      - .env

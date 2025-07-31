@@ -187,4 +187,8 @@ export class TransactionsService {
       HelperService.errorHandler(error, 'Failed to search virtual accounts');
     }
   }
+
+  async verifyFunding(reference: string) {
+    await this.walletService.verifyFundingPayment(reference, false);
+  }
 }

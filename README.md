@@ -125,7 +125,7 @@ erDiagram
 
 - Node.js (v20+)
 - MySQL (v8+)
-- Redis (v6+)
+- Redis (v7+)
 - npm or yarn
 
 ### Environment Setup
@@ -467,13 +467,77 @@ npm run test:watch
 - **Transaction Audit**: Complete transaction history and audit trails
 - **Queue Monitoring**: BullMQ job queue monitoring
 
+## ⚙️ Background Job Processing
+
+The application uses BullMQ with Redis for reliable background job processing, particularly for transaction status verification and automated reconciliation.
+
+### Transaction Status Monitoring
+
+#### Funding Transaction Jobs
+
+- **Payment Verification Job**: Automatically checks payment status with Flutterwave gateway
+- **Retry Logic**: Failed verifications are retried with exponential backoff (max 10 attempts)
+- **Balance Update**: Successful payments automatically credit user wallets
+- **Notification**: Email notifications sent on transaction completion/failure
+
+```typescript
+@Processor('transactions')
+export class TransactionsProcessor extends WorkerHost {
+  private logger: Logger;
+  constructor(private transactionService: TransactionsService) {
+    super();
+    this.logger = new Logger(TransactionsProcessor.name);
+  }
+
+  async process(job: Job) {
+    switch (job.name) {
+      case TransactionJobsEnum.VerifyWithdrawal: {
+        const transferRef = job.data.transferRef;
+        await this.transactionService.verifyWithdrawal(transferRef);
+        break;
+      }
+      case TransactionJobsEnum.VerifyDeposit: {
+        const reference = job.data.reference;
+        await this.transactionService.verifyFunding(reference);
+        break;
+      }
+    }
+  }
+}
+```
+
+#### Withdrawal Transaction Jobs
+
+- **Bank Transfer Status**: Monitors bank transfer completion status
+- **Reversal Handling**: Automatically reverses failed withdrawals to user wallets
+
+#### Job Configuration
+
+```typescript
+// Job retry and delay configuration
+await this.transactionsQueue.add(
+        TransactionJobsEnum.VerifyDeposit,
+        {
+          reference,
+        },
+        {
+          delay: ONE_MINUTE_IN_MS * 1,
+          attempts: 10,
+          backoff: {
+            type: 'exponential',
+            delay: ONE_MINUTE_IN_MS * 2,
+          },
+        },
+      );
+```
+
 ## 🚀 Deployment
 
 ### Docker Deployment
 
 ```bash
 # Build image
-docker build -t wendian-wallet .
+docker build -f Dockerfile.staging -t wendian-wallet .
 
 # Run with docker-compose
 docker-compose up -d
@@ -530,7 +594,6 @@ src/
 - **Class Transformer**: Object transformation
 - **Class Validator**: Request validation
 
-
 ### Code Standards
 
 - Follow TypeScript best practices
@@ -550,7 +613,6 @@ For support and questions:
 - Create an issue in the repository
 - Contact the development team
 - Check the documentation for common solutions
-
 
 ---
 

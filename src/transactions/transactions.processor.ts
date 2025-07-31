@@ -21,7 +21,9 @@ export class TransactionsProcessor extends WorkerHost {
         break;
       }
       case TransactionJobsEnum.VerifyDeposit as string: {
-        // Handle deposit verification
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        const reference = job.data.reference as string;
+        await this.transactionService.verifyFunding(reference);
         break;
       }
     }

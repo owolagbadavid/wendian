@@ -1,0 +1,17 @@
+services:
+  redis:
+    restart: unless-stopped
+    image: redis:7.4.0
+    ports:
+      - "6379:6379"
+  mysql:
+    image: mysql:8.0
+    container_name: mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: wedian
+      MYSQL_USER: init
+      MYSQL_PASSWORD: root
+    ports:
+      - "3306:3306"
