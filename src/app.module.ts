@@ -16,6 +16,7 @@ import { TransactionsModule } from './transactions/transactions.module';
 import { KarmaService } from './common/services/karma.service';
 import { PaymentService } from './common/services/payment.service';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { MailModule } from './mail/mail.module';
 
 const cacheConfig: CacheModuleAsyncOptions = {
   isGlobal: true,
@@ -73,7 +74,7 @@ const cacheConfig: CacheModuleAsyncOptions = {
               ...(redisTLS
                 ? {
                     tls: {
-                      minVersion: 'TLSv1.3',
+                      minVersion: 'TLSv1.2',
                       rejectUnauthorized: true,
                     },
                   }
@@ -90,6 +91,7 @@ const cacheConfig: CacheModuleAsyncOptions = {
     }),
     WalletModule,
     TransactionsModule,
+    MailModule,
     ThrottlerModule.forRoot({
       throttlers: [
         {
