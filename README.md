@@ -197,7 +197,7 @@ ORIGINS=http://localhost:3000,http://localhost:3001
 4. Run database migrations:
 
 ```bash
-npm run migrate:latest
+npx ts-node --require dotenv/config ./node_modules/knex/bin/cli.js migrate:latest --knexfile src/db/knexfile.ts 
 ```
 
 5. Start the application:

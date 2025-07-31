@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 import { Global, Module } from '@nestjs/common';
 import knex, { Knex } from 'knex';
-import knexConfig from '../../knexfile';
+import knexConfig from './knexfile';
 import { UnitOfWork } from './uow/uow';
 import { WalletRepository } from './repositories/wallet.repository';
 import { TransactionRepository } from './repositories/transaction.repository';
