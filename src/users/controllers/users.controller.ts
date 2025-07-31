@@ -12,7 +12,7 @@ import {
 } from '@nestjs/common';
 import { SearchRequestDto } from 'src/common/dtos';
 import { UsersService } from '../services/users.service';
-import { Public, ResponseMessage, UserContext } from 'src/common/decorators';
+import { ResponseMessage, UserContext } from 'src/common/decorators';
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from 'src/auth/guards';
 import { UsernameDto } from '../dto/user.dto';
@@ -41,8 +41,15 @@ export class UsersController {
 
   @ResponseMessage('Wallet created successfully')
   @Post('wallets')
-  createWallet(@UserContext('sub') userId: string, @Body() body: CreateWalletDto) {
-    return this.usersService.createWallet(parseInt(userId, 10), body.bvn, body.phoneNumber);
+  createWallet(
+    @UserContext('sub') userId: string,
+    @Body() body: CreateWalletDto,
+  ) {
+    return this.usersService.createWallet(
+      parseInt(userId, 10),
+      body.bvn,
+      body.phoneNumber,
+    );
   }
 
   @ResponseMessage('Wallet details fetched successfully')

@@ -9,3 +9,26 @@ export class UsernameDto {
   @HelperService.Normalize()
   username: string;
 }
+
+export class SeedAdminDto {
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  @HelperService.Normalize()
+  email: string;
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  password: string;
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  firstName: string;
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  lastName: string;
+}

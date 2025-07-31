@@ -182,8 +182,7 @@ export class AuthService {
         } catch (error) {
           if (error instanceof NotFoundException) {
             // User not found, proceed with registration
-          }
-          if (error instanceof HttpException) {
+          } else if (error instanceof HttpException) {
             throw error;
           } else {
             throw new InternalServerErrorException('Karma check failed');
