@@ -478,6 +478,8 @@ describe('WalletService', () => {
       });
       expect(walletRepository.findById).toHaveBeenCalledWith(
         mockTransaction.wallet_id,
+        mockTrx,
+        true,
       );
       expect(paymentService.verifyTransactionBySystemRef).toHaveBeenCalledWith(
         reference,
