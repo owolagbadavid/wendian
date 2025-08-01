@@ -87,6 +87,8 @@ export class UsersService {
       if (!wallet) {
         throw new NotFoundException('Wallet not found');
       }
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      wallet.balance = wallet.balance.toString() as any;
       return wallet;
     } catch (error) {
       HelperService.errorHandler(error, 'Failed to retrieve wallet');
