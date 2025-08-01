@@ -26,12 +26,12 @@ export class WalletWithdrawalDto {
   @IsValidDecimal()
   amount: string;
 
-  @ApiProperty()
+  @ApiProperty({ example: '0690000040' })
   @IsString()
   @IsNotEmpty()
   accountNumber: string;
 
-  @ApiProperty()
+  @ApiProperty({ example: '044' })
   @IsString()
   @IsNotEmpty()
   bankCode: string;
