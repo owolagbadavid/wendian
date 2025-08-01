@@ -30,94 +30,86 @@ A comprehensive digital wallet service built with NestJS, providing secure finan
 ### Database Schema (ERD)
 
 ```mermaid
-erDiagram
-    users {
-        int id PK
-        varchar email UK
-        text password_hash
-        boolean is_email_verified
-        timestamp email_verified_at
-        varchar status
-        varchar role
-        varchar username UK
-        varchar first_name
-        varchar last_name
-        timestamp created_at
-        timestamp updated_at
-        timestamp deleted_at
-    }
+classDiagram
+direction BT
+class transactions {
+   int unsigned wallet_id
+   varchar(20) transaction_type
+   decimal(15,2) amount
+   varchar(3) currency
+   varchar(20) status
+   external_reference  /* External reference (e.g., bank or payment gateway reference) */ varchar(100)
+   varchar(100) internal_reference  /* Internal reference for tracking */
+   timestamp created_at
+   timestamp updated_at
+   timestamp deleted_at
+   int unsigned id
+}
 
-    wallets {
-        int id PK
-        int user_id FK
-        decimal balance
-        varchar currency
-        boolean is_active
-        timestamp created_at
-        timestamp updated_at
-        timestamp deleted_at
-    }
+class transfers {
+   int unsigned from_wallet_id
+   int unsigned to_wallet_id
+   decimal(15,2) amount
+   varchar(3) currency
+   text description
+   int unsigned from_transaction_id
+   int unsigned to_transaction_id
+   timestamp created_at
+   timestamp updated_at
+   timestamp deleted_at
+   int unsigned id
+}
 
-    transactions {
-        int id PK
-        int wallet_id FK
-        varchar transaction_type
-        decimal amount
-        varchar currency
-        varchar status
-        varchar external_reference
-        varchar internal_reference
-        timestamp created_at
-        timestamp updated_at
-        timestamp deleted_at
-    }
+class users {
+   varchar(50) email
+   text password_hash
+   tinyint(1) is_email_verified
+   timestamp email_verified_at
+   varchar(255) status
+   timestamp created_at
+   timestamp updated_at
+   timestamp deleted_at
+   text role
+   varchar(50) username
+   text first_name
+   text last_name
+   int unsigned id
+}
 
-    transfers {
-        int id PK
-        int from_wallet_id FK
-        int to_wallet_id FK
-        decimal amount
-        varchar currency
-        text description
-        int from_transaction_id FK
-        int to_transaction_id FK
-        timestamp created_at
-        timestamp updated_at
-        timestamp deleted_at
-    }
+class wallets {
+   int unsigned user_id
+   decimal(15,2) balance
+   varchar(3) currency
+   tinyint(1) is_active
+   timestamp created_at
+   timestamp updated_at
+   timestamp deleted_at
+   int unsigned id
+}
 
-    virtual_accounts {
-        int id PK
-        int wallet_id FK
+ class banks {
         varchar bank_code
         varchar bank_name
-        varchar account_number
-        varchar bvn
-        varchar phone_number
-        varchar reference
-        timestamp expiry_date
         timestamp created_at
         timestamp updated_at
         timestamp deleted_at
+        int unsigned id
     }
 
-    banks {
-        int id PK
-        varchar bank_code UK
-        varchar bank_name
-        timestamp created_at
-        timestamp updated_at
-        timestamp deleted_at
-    }
+transactions  -->  wallets : wallet_id->id
 
-    users ||--|| wallets : has
-    wallets ||--o{ transactions : contains
-    wallets ||--o{ transfers : from_wallet
-    wallets ||--o{ transfers : to_wallet
-    transactions ||--o{ transfers : from_transaction
-    transactions ||--o{ transfers : to_transaction
-    wallets ||--o{ virtual_accounts : has
+transfers  -->  transactions : from_transaction_id->id
+
+transfers  -->  transactions : to_transaction_id->id
+
+transfers  -->  wallets : from_wallet_id->id
+
+transfers  -->  wallets : to_wallet_id->id
+
+wallets  -->  users : user_id->id
+
 ```
+
 
 ## 📦 Installation
 
