@@ -110,6 +110,9 @@ wallets  -->  users : user_id->id
 
 ```
 
+![ER Diagram](./erd.png)
+
+
 
 ## 📦 Installation
 
